@@ -1,0 +1,239 @@
+.container {
+  padding-top: 100px;
+  min-height: 100vh;
+  margin-bottom: 4rem;
+}
+
+.intro {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  margin-bottom: 4rem;
+  padding-top: 2rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  background-color: var(--color-accent);
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: clamp(3rem, 5vw, 4rem);
+  letter-spacing: -0.04em;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.productCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.productCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+  border-color: var(--color-border-hover);
+}
+
+.imageArea {
+  width: 100%;
+  height: 240px;
+  background-color: #f1f1f1;
+  position: relative;
+}
+
+.imageArea img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.productName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.scientificName {
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+}
+
+.description {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  flex: 1;
+}
+
+.metrics {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--color-background);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-border);
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.price {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.buyBtn {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.buyBtn:hover {
+  opacity: 0.9;
+}
+
+/* Modal Checkout */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modalContent {
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+  padding: 2.5rem;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.transferBox {
+  background: #f9f9f9;
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.transferRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.transferRow:last-child {
+  margin-bottom: 0;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  outline: none;
+  background: var(--color-background);
+}
+
+.inputField:focus {
+  border-color: var(--color-foreground);
+}
+
+.confirmBtn {
+  width: 100%;
+  padding: 1rem;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.successState {
+  text-align: center;
+  padding: 2rem 0;
+}

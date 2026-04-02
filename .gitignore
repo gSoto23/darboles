@@ -1,0 +1,81 @@
+# =========================
+# NEXT.JS & NODE.JS
+# =========================
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+/build
+
+# next.js typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# =========================
+# PYTHON & FASTAPI (BACKEND)
+# =========================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# DOCKER & DATABASE
+# =========================
+# No enviar los datos pesados y privados de la base de datos local
+postgres_data/
+
+# =========================
+# MISC & SYSTEM
+# =========================
+# Archivos de entorno y secretos ¡NUNCA SUBIR A GITHUB!
+.env
+.env.local
+.env.development
+.env.production
+.env.*
+
+# Sistema Operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

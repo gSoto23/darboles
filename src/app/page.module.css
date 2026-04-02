@@ -1,0 +1,126 @@
+.heroContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8rem 2rem 4rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sutil gradiente de fondo radial para darle volumen sin perder el minimalismo */
+.heroContainer::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80vw;
+  height: 80vw;
+  background: radial-gradient(circle, rgba(0,0,0,0.03) 0%, rgba(255,255,255,0) 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 9999px;
+  margin-bottom: 2rem;
+  letter-spacing: -0.01em;
+}
+
+.title {
+  max-width: 900px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(180deg, #000 0%, #333 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: clamp(1.125rem, 3vw, 1.35rem);
+  line-height: 1.5;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+  margin-top: 4rem;
+}
+
+@media (min-width: 768px) {
+  .optionsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  padding: 2.5rem;
+  border-radius: var(--radius-md);
+  text-align: left;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-border-hover);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.04);
+  background-color: #FFFFFF;
+}
+
+.cardTag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.cardDesc {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.cardAction {
+  margin-top: auto;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-foreground);
+}
+
+.cardAction svg {
+  transition: transform 0.2s ease;
+}
+
+.card:hover .cardAction svg {
+  transform: translateX(4px);
+}

@@ -1,0 +1,123 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  padding-top: 60px; /* offset navbar */
+}
+
+.sidebar {
+  width: 250px;
+  border-right: 1px solid var(--color-border);
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--color-surface);
+}
+
+.navItem {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.navItem:hover {
+  background: rgba(0,0,0,0.02);
+  color: var(--color-foreground);
+}
+
+.navItem.active {
+  background: var(--color-foreground);
+  color: var(--color-background);
+}
+
+.mainContent {
+  flex: 1;
+  padding: 3rem;
+  overflow-y: auto;
+}
+
+.header {
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.title {
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.dataTable th, .dataTable td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.dataTable th {
+  background: rgba(0,0,0,0.02);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.dataTable tr:last-child td {
+  border-bottom: none;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.statusSuccess {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.statusPending {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.addBtn {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.addBtn:hover {
+  opacity: 0.9;
+}
