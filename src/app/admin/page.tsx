@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import styles from './Admin.module.css';
+import SmartTable from '@/components/SmartTable';
 
 interface TreeSpecies {
   id: number;
@@ -30,12 +31,16 @@ interface Subscription {
   farm_id: number | null;
 }
 
+import Loader from '@/components/Loader';
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'pedidos' | 'suscripciones' | 'catalogo' | 'fincas'>('pedidos');
+  const [activeTab, setActiveTab] = useState<'pedidos' | 'suscripciones' | 'catalogo' | 'fincas' | 'usuarios'>('pedidos');
   const [trees, setTrees] = useState<TreeSpecies[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // New Farm Modal State
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
@@ -64,6 +69,7 @@ export default function AdminDashboard() {
           window.location.href = '/dashboard';
         } else {
           setIsAdmin(true);
+          setIsSuperAdmin(data.is_superadmin);
         }
       } catch (e) {
         window.location.href = '/login';
@@ -71,6 +77,16 @@ export default function AdminDashboard() {
     };
     checkAdmin();
   }, []);
+
+  const fetchUsers = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:8001/api/v1/admin/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if(res.ok) setUsers(await res.json());
+    } catch(err) { console.error(err); }
+  }
 
   const fetchFarms = async () => {
     const token = localStorage.getItem('token');
@@ -113,7 +129,10 @@ export default function AdminDashboard() {
       fetchSubscriptions();
       fetchFarms(); // need farms for the dropdown
     }
-  }, [activeTab, isAdmin]);
+    if (activeTab === 'usuarios' && isSuperAdmin) {
+      fetchUsers();
+    }
+  }, [activeTab, isAdmin, isSuperAdmin]);
 
   const handleCreateFarm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,12 +173,29 @@ export default function AdminDashboard() {
     }
   }
 
-  if (!isAdmin) return null;
+  const handleToggleAdmin = async (userId: number, currentStatus: boolean) => {
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`http://localhost:8001/api/v1/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_admin: !currentStatus })
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  if (!isAdmin) return <Loader />;
 
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
-        <div style={{ padding: '0 1rem', marginBottom: '2rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-muted)' }}>
+        <div className={styles.navTitle}>
           ADMINISTRACIÓN
         </div>
         <button 
@@ -186,6 +222,14 @@ export default function AdminDashboard() {
         >
           Inventario Net-Zero (Fincas)
         </button>
+        {isSuperAdmin && (
+          <button 
+            className={`${styles.navItem} ${activeTab === 'usuarios' ? styles.active : ''}`}
+            onClick={() => setActiveTab('usuarios')}
+          >
+            Usuarios & Roles
+          </button>
+        )}
       </aside>
 
       <main className={`${styles.mainContent} fade-in`}>
@@ -196,6 +240,7 @@ export default function AdminDashboard() {
               {activeTab === 'suscripciones' && 'Panel de Suscripciones (Calculadora)'}
               {activeTab === 'catalogo' && 'Control de Especies e Inventario'}
               {activeTab === 'fincas' && 'Monitoreo Global de Fincas'}
+              {activeTab === 'usuarios' && 'Sistema de Roles y Accesos MAESTRO'}
             </h1>
             <p className={styles.subtitle}>
               Monitor central del ecosistema Dárboles.
@@ -211,146 +256,105 @@ export default function AdminDashboard() {
 
         {activeTab === 'pedidos' && (
           <div className="slide-up">
-            <table className={styles.dataTable}>
-              <thead>
-                <tr>
-                  <th>ID Pedido</th>
-                  <th>Cliente</th>
-                  <th>Árbol Solicitado</th>
-                  <th>Referencia Bancaria</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>#ORD-891</td>
-                  <td>Prueba Local</td>
-                  <td>Cedro Amargo</td>
-                  <td>SINPE-12345</td>
-                  <td><span className={`${styles.statusBadge} ${styles.statusSuccess}`}>Verificado</span></td>
-                </tr>
-                <tr>
-                  <td>#ORD-892</td>
-                  <td>María Conejo</td>
-                  <td>Corteza Amarilla</td>
-                  <td>SINPE-99121</td>
-                  <td><span className={`${styles.statusBadge} ${styles.statusPending}`}>Validando SINPE</span></td>
-                </tr>
-              </tbody>
-            </table>
+             <SmartTable 
+              data={[
+                { id: 'ORD-891', client: 'Prueba Local', tree: 'Cedro Amargo', ref: 'SINPE-12345', status: 'Verificado' },
+                { id: 'ORD-892', client: 'María Conejo', tree: 'Corteza Amarilla', ref: 'SINPE-99121', status: 'Validando SINPE' }
+              ]} 
+              columns={[
+                { key: 'id', label: 'ID Pedido', render: (row: any) => `#${row.id}` },
+                { key: 'client', label: 'Cliente', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.client}</span> },
+                { key: 'tree', label: 'Árbol Solicitado' },
+                { key: 'ref', label: 'Referencia Bancaria', render: (row: any) => <span style={{ color: 'var(--color-muted)' }}>{row.ref}</span> },
+                { key: 'status', label: 'Estado', render: (row: any) => <span className={`${styles.statusBadge} ${row.status === 'Verificado' ? styles.statusSuccess : styles.statusPending}`}>{row.status}</span> }
+              ]} 
+            />
           </div>
         )}
 
         {activeTab === 'suscripciones' && (
           <div className="slide-up">
-            <table className={styles.dataTable}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Cliente Net-Zero</th>
-                  <th>Cantidad de Árboles</th>
-                  <th>Estado</th>
-                  <th>Asignación de Finca</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map(sub => (
-                  <tr key={sub.id}>
-                    <td>#{sub.id}</td>
-                    <td style={{ fontWeight: 500 }}>{sub.customer_name} <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{sub.customer_email}</div></td>
-                    <td>{sub.quantity}</td>
-                    <td><span className={`${styles.statusBadge} ${sub.status === 'active' ? styles.statusSuccess : styles.statusPending}`}>{sub.status}</span></td>
-                    <td>
-                      <select 
-                        value={sub.farm_id || ''} 
-                        onChange={(e) => handleAssignFarm(sub.id, e.target.value)}
-                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-foreground)', fontSize: '0.85rem' }}
-                      >
-                        <option value="">Finca NO Asignada</option>
-                        {farms.map(f => (
-                          <option key={f.id} value={f.id}>{f.name}</option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-                {subscriptions.length === 0 && (
-                   <tr>
-                     <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>No hay suscripciones registradas.</td>
-                   </tr>
+            <SmartTable 
+              data={subscriptions} 
+              columns={[
+                { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
+                { key: 'customer_name', label: 'Cliente Net-Zero', render: (row: any) => <><span style={{ fontWeight: 500 }}>{row.customer_name}</span><div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{row.customer_email}</div></> },
+                { key: 'quantity', label: 'Árboles' },
+                { key: 'status', label: 'Estado', render: (row: any) => <span className={`${styles.statusBadge} ${row.status === 'active' ? styles.statusSuccess : styles.statusPending}`}>{row.status}</span> },
+                { key: 'farm_id', label: 'Asignación de Finca', render: (row: any) => (
+                  <select 
+                    value={row.farm_id || ''} 
+                    onChange={(e) => handleAssignFarm(row.id, e.target.value)}
+                    style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-foreground)', fontSize: '0.85rem', maxWidth: '200px', width: '100%', textOverflow: 'ellipsis' }}
+                  >
+                    <option value="">Finca NO Asignada</option>
+                    {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </select>
                 )}
-              </tbody>
-            </table>
+              ]} 
+            />
           </div>
         )}
 
-        {/* --- Catalog --- */}
         {activeTab === 'catalogo' && (
           <div className="slide-up">
-            <table className={styles.dataTable}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre Común</th>
-                  <th>Nombre Científico</th>
-                  <th>Precio Comercial</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trees.length > 0 ? trees.map(tree => (
-                  <tr key={tree.id}>
-                    <td>#{tree.id}</td>
-                    <td style={{ fontWeight: 500 }}>{tree.name}</td>
-                    <td style={{ fontStyle: 'italic', color: 'var(--color-muted)' }}>{tree.scientific_name}</td>
-                    <td>${tree.price_usd.toFixed(2)}</td>
-                    <td><button style={{ background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', textDecoration: 'underline' }}>Editar</button></td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Catálogo vacío.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+             <SmartTable 
+              data={trees} 
+              columns={[
+                { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
+                { key: 'name', label: 'Nombre Común', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.name}</span> },
+                { key: 'scientific_name', label: 'Nombre Científico', render: (row: any) => <span style={{ fontStyle: 'italic', color: 'var(--color-muted)' }}>{row.scientific_name}</span> },
+                { key: 'price_usd', label: 'Precio', render: (row: any) => `$${row.price_usd.toFixed(2)}` },
+                { key: 'actions', label: 'Acciones', render: (row: any) => <button style={{ background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', textDecoration: 'underline' }}>Editar</button> }
+              ]} 
+            />
           </div>
         )}
 
-        {/* --- Fincas --- */}
         {activeTab === 'fincas' && (
           <div className="slide-up">
-            <table className={styles.dataTable}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre Operativo</th>
-                  <th>GPS / Coord</th>
-                  <th>Árboles (Plantados/Vendidos)</th>
-                  <th>Capacidad de CO₂</th>
-                  <th>Cuidador</th>
-                </tr>
-              </thead>
-              <tbody>
-                {farms.length > 0 ? farms.map(farm => (
-                  <tr key={farm.id}>
-                    <td>#{farm.id}</td>
-                    <td style={{ fontWeight: 500 }}>{farm.name}</td>
-                    <td>
-                      <a href={`https://www.google.com/maps?q=${farm.gps_location}`} target="_blank" rel="noopener noreferrer" style={{ fontStyle: 'italic', color: 'var(--color-accent)', textDecoration: 'underline' }}>
-                        {farm.gps_location}
-                      </a>
-                    </td>
-                    <td><span style={{ fontWeight: 600 }}>{farm.total_trees.toLocaleString()}</span> totales / <span style={{ color: 'var(--color-accent)'}}>{farm.trees_sold.toLocaleString()}</span> asignados</td>
-                    <td>{farm.carbon_capacity_tons.toLocaleString()} Toneladas</td>
-                    <td>{farm.caretaker_name} ({farm.caretaker_contact})</td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No hay fincas registradas en el inventario.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <SmartTable 
+              data={farms} 
+              columns={[
+                { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
+                { key: 'name', label: 'Nombre Operativo', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.name}</span> },
+                { key: 'gps_location', label: 'Coordenadas GPS', render: (row: any) => <a href={`https://www.google.com/maps?q=${row.gps_location}`} target="_blank" rel="noopener noreferrer" style={{ fontStyle: 'italic', color: 'var(--color-accent)', textDecoration: 'underline' }}>{row.gps_location}</a> },
+                { key: 'total_trees', label: 'Árboles (Meta)', render: (row: any) => <><span style={{ fontWeight: 600 }}>{row.total_trees.toLocaleString()}</span> totales / <span style={{ color: 'var(--color-accent)'}}>{row.trees_sold.toLocaleString()}</span> vendidos</> },
+                { key: 'carbon_capacity_tons', label: 'Capacidad de CO₂', render: (row: any) => `${row.carbon_capacity_tons.toLocaleString()} Toneladas` },
+                { key: 'caretaker_name', label: 'Cuidador', render: (row: any) => `${row.caretaker_name} (${row.caretaker_contact})` }
+              ]} 
+            />
+          </div>
+        )}
+
+        {activeTab === 'usuarios' && isSuperAdmin && (
+          <div className="slide-up">
+             <SmartTable 
+              data={users} 
+              columns={[
+                { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
+                { key: 'full_name', label: 'Cuenta', render: (row: any) => <><span style={{ fontWeight: 500 }}>{row.full_name || 'Sin Nombre'}</span><div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{row.email}</div></> },
+                { key: 'is_admin', label: 'Rol', render: (row: any) => row.is_superadmin ? <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>SuperAdmin</span> : row.is_admin ? <span style={{ fontWeight: 600 }}>Administrador</span> : <span style={{ color: 'var(--color-muted)' }}>Usuario Estándar</span> },
+                { key: 'status', label: 'Estado', render: (row: any) => '✓ Activa' },
+                { key: 'actions', label: 'Gestión', render: (row: any) => !row.is_superadmin ? (
+                    <button 
+                      onClick={() => handleToggleAdmin(row.id, row.is_admin)}
+                      style={{
+                        background: row.is_admin ? 'transparent' : 'var(--color-foreground)',
+                        color: row.is_admin ? 'var(--color-foreground)' : 'var(--color-background)',
+                        border: row.is_admin ? '1px solid var(--color-foreground)' : 'none',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 600
+                      }}>
+                      {row.is_admin ? 'Revocar Admin' : 'Hacer Admin'}
+                    </button>
+                  ) : <span style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>Inmutable</span>
+                }
+              ]} 
+            />
           </div>
         )}
       </main>

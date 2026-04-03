@@ -82,7 +82,7 @@ export default function TransparenciaPage() {
             <h2 className={styles.sectionTitle} style={{ marginBottom: '0.5rem' }}>I. Mitigación Biológica de CO₂</h2>
             
             {/* Animated Inventory Graphic UI */}
-            <div style={{ margin: '3rem 0', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1.5rem', padding: '3rem', display: 'flex', gap: '4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className={styles.chartCard}>
               
               {/* Graphic (Donut Chart) */}
               <div style={{ flex: '0 0 250px', position: 'relative', margin: '0 auto' }}>
@@ -113,7 +113,7 @@ export default function TransparenciaPage() {
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--color-muted)', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
                     Capacidad Bruta del Proyecto (Fincas)
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem' }}>
+                  <div className={styles.dataGrid}>
                     <div>
                       <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, color: 'var(--color-foreground)' }}>{animatedCapTrees.toLocaleString()}</div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>Total Árboles Plantados</div>
@@ -129,7 +129,7 @@ export default function TransparenciaPage() {
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
                     Impacto Generado por Suscriptores
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem' }}>
+                  <div className={styles.dataGrid}>
                     <div>
                       <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, color: 'var(--color-accent)' }}>{animatedSoldTrees.toLocaleString()}</div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>Árboles Ya Asignados</div>

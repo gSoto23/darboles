@@ -69,6 +69,17 @@
   }
 }
 
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dashboardGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
 .card {
   padding: 2.5rem;
   border-radius: var(--radius-md);

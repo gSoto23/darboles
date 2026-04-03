@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.routers import auth, admin, payments, inventory, subscriptions
+from app.routers import auth, admin, payments, inventory, subscriptions, admin_users
 from app.models import user, tree, farm, subscription
 
 # Using Alembic for database migrations instead of create_all()
@@ -26,6 +26,7 @@ app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["Payments"])
 app.include_router(inventory.router, prefix="/api/v1", tags=["Inventory"])
 app.include_router(subscriptions.router, prefix="/api/v1", tags=["Subscriptions"])
+app.include_router(admin_users.router, prefix="/api/v1", tags=["Admin Users"])
 
 @app.get("/")
 def read_root():

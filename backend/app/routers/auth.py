@@ -65,8 +65,36 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
         raise credentials_exception
     return user
 
+from app.schemas.user import UserCreate, UserLogin, Token, UserResponse, UserUpdate
+
 @router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.patch("/me", response_model=UserResponse)
+def update_user_me(user_data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if user_data.full_name is not None:
+        current_user.full_name = user_data.full_name
+    if user_data.email is not None and user_data.email != current_user.email:
+        existing = db.query(User).filter(User.email == user_data.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="El correo electrónico ya está en uso.")
+        current_user.email = user_data.email
+        
+    if user_data.whatsapp is not None:
+        current_user.whatsapp = user_data.whatsapp
+    if user_data.address is not None:
+        current_user.address = user_data.address
+        
+    if user_data.new_password:
+        if not user_data.current_password:
+            raise HTTPException(status_code=400, detail="Debe proporcionar la contraseña actual para cambiarla.")
+        if not verify_password(user_data.current_password, current_user.hashed_password):
+            raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta.")
+        current_user.hashed_password = get_password_hash(user_data.new_password)
+        
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 from app.schemas.user import ForgotPassword, PasswordReset

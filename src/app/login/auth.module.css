@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 8rem 2rem 2rem 2rem;
   background-color: var(--color-background);
   position: relative;
   overflow: hidden;

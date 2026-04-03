@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ToasterProvider from "@/components/ToasterProvider";
 
 export default function RootLayout({
   children,
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
       <body>
+        <ToasterProvider />
         <Navbar />
         {children}
         <Footer />

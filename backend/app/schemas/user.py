@@ -11,11 +11,22 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    whatsapp: Optional[str] = None
+    address: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
     full_name: str | None = None
+    whatsapp: str | None = None
+    address: str | None = None
     is_admin: bool = False
+    is_superadmin: bool = False
 
     class Config:
         from_attributes = True
