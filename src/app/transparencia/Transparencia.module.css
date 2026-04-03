@@ -120,3 +120,152 @@
   color: var(--color-muted);
   font-weight: 500;
 }
+
+.auditLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.auditLink:hover {
+  opacity: 0.8;
+}
+
+/* Glassmorphism Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  padding: 2rem 2.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  background: var(--color-background);
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modalBody {
+  padding: 2rem 2.5rem;
+}
+
+.closeBtn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background: var(--color-foreground);
+  color: var(--color-background);
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.modalSubtitle {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.auditSection {
+  margin-bottom: 2.5rem;
+}
+
+.auditSection h4 {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auditSection ul {
+  list-style: none;
+  padding: 0;
+}
+
+.auditSection li {
+  margin-bottom: 1.5rem;
+}
+
+.auditConstant {
+  font-family: monospace;
+  background: var(--color-surface);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.auditFormula {
+  display: block;
+  font-family: monospace;
+  background: #f4f4f5;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-border);
+  color: #18181b;
+}
+
+.auditRef {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-style: italic;
+  display: block;
+  margin-top: 0.5rem;
+}

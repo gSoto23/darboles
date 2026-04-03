@@ -26,8 +26,8 @@ services:
       - ./backend:/app
     ports:
       - "8001:8000"
-    environment:
-      - DATABASE_URL=postgresql://darboles_user:darboles_password@db/darboles_db
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy

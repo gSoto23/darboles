@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.routers import auth, admin
-from app.models import user, tree
+from app.routers import auth, admin, payments, inventory, subscriptions
+from app.models import user, tree, farm, subscription
 
-# Create tables (minimalist approach vs alembic for now)
-Base.metadata.create_all(bind=engine)
+# Using Alembic for database migrations instead of create_all()
 
 app = FastAPI(
     title="Darboles API",
@@ -24,6 +23,9 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+app.include_router(payments.router, prefix="/api/v1/payments", tags=["Payments"])
+app.include_router(inventory.router, prefix="/api/v1", tags=["Inventory"])
+app.include_router(subscriptions.router, prefix="/api/v1", tags=["Subscriptions"])
 
 @app.get("/")
 def read_root():

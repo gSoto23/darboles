@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "Darboles | Reconexión Ambiental",
   description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un legado.",
 };
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function RootLayout({
   children,

@@ -10,6 +10,10 @@ export default function Calculator() {
   const [diet, setDiet] = useState('omnivoro');
   const [totalCarbon, setTotalCarbon] = useState(0);
 
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+
   const calculateFootprint = () => {
     // Parámetros mundiales genéricos:
     // Coche: ~0.20 kg CO2 per km * 52 semanas
@@ -27,6 +31,41 @@ export default function Calculator() {
     const totalKg = carCarbonAnnual + flightCarbonAnnual + dietCarbon;
     setTotalCarbon(+(totalKg / 1000).toFixed(2));
     setStep(4);
+  };
+
+  const handleCheckout = async () => {
+    if (!customerEmail || !customerName) {
+      alert("Por favor ingresa tu nombre y correo para continuar.");
+      return;
+    }
+    setLoadingCheckout(true);
+    try {
+      const amount = Math.ceil(totalCarbon * 12);
+      
+      const payload = {
+        total_carbon: totalCarbon,
+        amount_usd: amount,
+        customer_email: customerEmail,
+        customer_name: customerName
+      };
+
+      const res = await fetch("http://localhost:8001/api/v1/payments/checkout/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        alert("Error al iniciar checkout: " + (data.detail || "Error desconocido"));
+      }
+    } catch (e) {
+      alert("Error de conexión con el servidor");
+    } finally {
+      setLoadingCheckout(false);
+    }
   };
 
   return (
@@ -119,7 +158,33 @@ export default function Calculator() {
                 Mantendremos al menos <strong>{Math.ceil((totalCarbon * 1000) / 25)} árboles vivos</strong> creciendo en Costa Rica a tu nombre cada año para capturar esta cantidad exacta de CO2.
               </p>
               <div className={styles.price}>${Math.ceil(totalCarbon * 12)} <span style={{fontSize: '1rem', fontWeight: 400, color: 'var(--color-muted)'}}>/ mes</span></div>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} style={{width: '100%', marginTop: '1.5rem'}}>Iniciar Patrocinio</button>
+              
+              <div style={{marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left'}}>
+                <label style={{fontSize: '0.875rem', fontWeight: 500}}>Tus datos para iniciar</label>
+                <input 
+                  type="text" 
+                  placeholder="Nombre completo" 
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  style={{padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem'}}
+                />
+                <input 
+                  type="email" 
+                  placeholder="Correo electrónico" 
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  style={{padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem'}}
+                />
+              </div>
+
+              <button 
+                className={`${styles.btn} ${styles.btnPrimary}`} 
+                style={{width: '100%', marginTop: '1.5rem'}}
+                onClick={handleCheckout}
+                disabled={loadingCheckout}
+              >
+                {loadingCheckout ? "Creando tu suscripción en 4Geeks..." : "Iniciar Patrocinio"}
+              </button>
             </div>
             
             <div style={{marginTop: '2rem'}}>
