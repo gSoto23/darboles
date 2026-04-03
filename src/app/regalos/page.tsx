@@ -29,15 +29,15 @@ interface CartItem {
 export default function RegalosPage() {
   const [trees, setTrees] = useState<TreeSpecies[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Shopping Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  
+
   // Modals UI state
   const [configTree, setConfigTree] = useState<TreeSpecies | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'success'>('cart');
-  
+
   // Active Gift Configuration Form
   const [quantity, setQuantity] = useState(1);
   const [recipientName, setRecipientName] = useState("");
@@ -47,7 +47,7 @@ export default function RegalosPage() {
   const [recipientAddress, setRecipientAddress] = useState("");
   const [message, setMessage] = useState("");
   const [sendDate, setSendDate] = useState("");
-  
+
   // Final Checkout Form
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -147,7 +147,7 @@ export default function RegalosPage() {
       });
 
       const data = await response.json();
-      
+
       if (paymentMethod === 'card' && data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {
@@ -167,7 +167,7 @@ export default function RegalosPage() {
     <div className={styles.container}>
       <main className="page-container slide-up">
         <header className={styles.intro}>
-          <span className={styles.badge}>Mercado Local — Costa Rica</span>
+          <span className={styles.badge}>Regala un Arbol</span>
           <h1 className={styles.title}>Regala Propósito.</h1>
           <p className={styles.subtitle}>
             Arma tu carrito botánico. Puedes regalar diferentes especies a una misma persona o distribuir tu compra entre varios amigos. Todos recibirán un certificado único.
@@ -187,15 +187,15 @@ export default function RegalosPage() {
                   <h2 className={styles.productName}>{tree.name}</h2>
                   <div className={styles.scientificName}>{tree.scientific_name}</div>
                   <p className={styles.description}>{tree.description}</p>
-                  
+
                   <div className={styles.metrics}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></svg>
                     Captura {tree.co2_capture_capacity_kg_per_year}kg CO₂/año
                   </div>
-                  
+
                   <div className={styles.priceRow}>
                     <div className={styles.price}>${tree.price_usd}</div>
-                    <button 
+                    <button
                       className={styles.buyBtn}
                       onClick={() => handleStartConfig(tree)}
                     >
@@ -214,7 +214,7 @@ export default function RegalosPage() {
         <button className={styles.floatingCartBtn} onClick={openCheckout}>
           <div className={styles.cartBadge}>{cartItems.length}</div>
           Finalizar Compra (${cartTotalUsd})
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
         </button>
       )}
 
@@ -223,17 +223,17 @@ export default function RegalosPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-               <h3 className={styles.modalTitle}>Personaliza este Regalo</h3>
-               <div className={styles.modalSubtitle}>Vas a añadir: <strong>{configTree.name}</strong> (${configTree.price_usd} c/u)</div>
-               <button type="button" className={styles.closeBtn} onClick={() => setConfigTree(null)}>×</button>
+              <h3 className={styles.modalTitle}>Personaliza este Regalo</h3>
+              <div className={styles.modalSubtitle}>Vas a añadir: <strong>{configTree.name}</strong> (${configTree.price_usd} c/u)</div>
+              <button type="button" className={styles.closeBtn} onClick={() => setConfigTree(null)}>×</button>
             </div>
 
             <div className={styles.modalBody}>
               <form onSubmit={handleAddToCart}>
-                
+
                 <div className={styles.formSection}>
                   <div className={styles.formSectionTitle}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
                     ¿Cuántos de este tipo deseas añadir?
                   </div>
                   <div className={styles.quantitySelector}>
@@ -265,7 +265,7 @@ export default function RegalosPage() {
                   </div>
                   <div style={{ marginTop: '1rem' }}>
                     <label className={styles.inputLabel}>Dirección de Envío (Opcional)</label>
-                    <textarea value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} className={`${styles.inputField} ${styles.textareaField}`} style={{minHeight: '60px'}} placeholder="Ej: San José, Escazú..."></textarea>
+                    <textarea value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} className={`${styles.inputField} ${styles.textareaField}`} style={{ minHeight: '60px' }} placeholder="Ej: San José, Escazú..."></textarea>
                   </div>
                   <div style={{ marginTop: '1rem' }}>
                     <label className={styles.inputLabel}>Mensaje de dedicatoria (Opcional)</label>
@@ -284,7 +284,7 @@ export default function RegalosPage() {
                   </div>
                   <button type="submit" className={styles.confirmBtn}>
                     Añadir al Carrito
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
                   </button>
                 </div>
 
@@ -299,10 +299,10 @@ export default function RegalosPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-               <h3 className={styles.modalTitle}>Tu Carrito de Regalos</h3>
-               {!isSubmitting && checkoutStep !== 'success' && (
-                 <button type="button" className={styles.closeBtn} onClick={() => setShowCheckout(false)}>×</button>
-               )}
+              <h3 className={styles.modalTitle}>Tu Carrito de Regalos</h3>
+              {!isSubmitting && checkoutStep !== 'success' && (
+                <button type="button" className={styles.closeBtn} onClick={() => setShowCheckout(false)}>×</button>
+              )}
             </div>
 
             <div className={styles.modalBody}>
@@ -318,7 +318,7 @@ export default function RegalosPage() {
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           <span className={styles.cartItemPrice}>${item.tree.price_usd * item.quantity}</span>
                           <button type="button" className={styles.deleteBtn} onClick={() => handeRemoveFromCart(item.id)}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                           </button>
                         </div>
                       </div>
@@ -394,7 +394,7 @@ export default function RegalosPage() {
                     Hemos anotado los datos de todos los destinatarios y sus respectivos certificados. Se enviarán en las fechas programadas tras confirmar el pago.
                   </p>
                   <button className={styles.confirmBtn} onClick={() => { setShowCheckout(false); setCheckoutStep('cart'); }} style={{ maxWidth: '200px', margin: '0 auto' }}>Volver al Catálogo</button>
-               </div>
+                </div>
               )}
             </div>
           </div>

@@ -18,10 +18,10 @@ export default function Calculator() {
     // Parámetros mundiales genéricos:
     // Coche: ~0.20 kg CO2 per km * 52 semanas
     const carCarbonAnnual = carKm * 52 * 0.20;
-    
+
     // Vuelo: ~250 kg CO2 per hour
     const flightCarbonAnnual = flightHours * 250;
-    
+
     // Dieta: Omnivoro (2500kg), Vegetariano (1700kg), Vegano (1500kg)
     let dietCarbon = 2500;
     if (diet === 'vegetariano') dietCarbon = 1700;
@@ -41,7 +41,7 @@ export default function Calculator() {
     setLoadingCheckout(true);
     try {
       const amount = Math.ceil(totalCarbon * 12);
-      
+
       const payload = {
         total_carbon: totalCarbon,
         amount_usd: amount,
@@ -54,7 +54,7 @@ export default function Calculator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      
+
       const data = await res.json();
       if (res.ok && data.checkout_url) {
         window.location.href = data.checkout_url;
@@ -76,10 +76,10 @@ export default function Calculator() {
           <div className={styles.inputGroup}>
             <span className={styles.label}>¿Cuántos Kilómetros conduces a la semana aproximádamente?</span>
             <div className={styles.sliderValue}>{carKm} km</div>
-            <input 
-              type="range" 
-              min="0" max="1000" step="10" 
-              value={carKm} 
+            <input
+              type="range"
+              min="0" max="1000" step="10"
+              value={carKm}
               onChange={(e) => setCarKm(Number(e.target.value))}
               className={styles.slider}
             />
@@ -97,10 +97,10 @@ export default function Calculator() {
           <div className={styles.inputGroup}>
             <span className={styles.label}>¿Cuántas horas de vuelo tomaste el último año?</span>
             <div className={styles.sliderValue}>{flightHours} h</div>
-            <input 
-              type="range" 
-              min="0" max="100" step="1" 
-              value={flightHours} 
+            <input
+              type="range"
+              min="0" max="100" step="1"
+              value={flightHours}
               onChange={(e) => setFlightHours(Number(e.target.value))}
               className={styles.slider}
             />
@@ -118,19 +118,19 @@ export default function Calculator() {
           <div className={styles.inputGroup}>
             <span className={styles.label}>Nuestra dieta impacta fuertemente nuestra huella ecológica. Selecciona la más acorde a ti:</span>
             <div className={styles.optionsRow}>
-              <button 
+              <button
                 className={`${styles.optionBtn} ${diet === 'omnivoro' ? styles.active : ''}`}
                 onClick={() => setDiet('omnivoro')}
               >
                 Omnívora
               </button>
-              <button 
+              <button
                 className={`${styles.optionBtn} ${diet === 'vegetariano' ? styles.active : ''}`}
                 onClick={() => setDiet('vegetariano')}
               >
                 Vegetariana
               </button>
-              <button 
+              <button
                 className={`${styles.optionBtn} ${diet === 'vegano' ? styles.active : ''}`}
                 onClick={() => setDiet('vegano')}
               >
@@ -149,45 +149,45 @@ export default function Calculator() {
         <div className="slide-up">
           <div className={styles.resultContainer}>
             <span className={styles.label}>Tu huella de carbono estimada anual es de</span>
-            <div className={styles.resultNumber}>{totalCarbon}t <span style={{fontSize: '2rem'}}>CO₂</span></div>
+            <div className={styles.resultNumber}>{totalCarbon}t <span style={{ fontSize: '2rem' }}>CO₂</span></div>
             <p className={styles.resultSubtitle}>El promedio mundial es de 4.7 toneladas. Con Dárboles puedes neutralizar esto delegando la captura a nuestros bosques.</p>
-            
+
             <div className={styles.subscriptionCard}>
               <h3>Suscripción de Mitigación Total</h3>
-              <p style={{marginTop: '0.5rem', marginBottom: '1rem'}}>
-                Mantendremos al menos <strong>{Math.ceil((totalCarbon * 1000) / 25)} árboles vivos</strong> creciendo en Costa Rica a tu nombre cada año para capturar esta cantidad exacta de CO2.
+              <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
+                Mantendremos al menos <strong>{Math.ceil((totalCarbon * 1000) / 25)} árboles vivos</strong> creciendo a tu nombre cada año para capturar esta cantidad exacta de CO2.
               </p>
-              <div className={styles.price}>${Math.ceil(totalCarbon * 12)} <span style={{fontSize: '1rem', fontWeight: 400, color: 'var(--color-muted)'}}>/ mes</span></div>
-              
-              <div style={{marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left'}}>
-                <label style={{fontSize: '0.875rem', fontWeight: 500}}>Tus datos para iniciar</label>
-                <input 
-                  type="text" 
-                  placeholder="Nombre completo" 
+              <div className={styles.price}>${Math.ceil(totalCarbon * 12)} <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--color-muted)' }}>/ mes</span></div>
+
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Tus datos para iniciar</label>
+                <input
+                  type="text"
+                  placeholder="Nombre completo"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  style={{padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem'}}
+                  style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }}
                 />
-                <input 
-                  type="email" 
-                  placeholder="Correo electrónico" 
+                <input
+                  type="email"
+                  placeholder="Correo electrónico"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
-                  style={{padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem'}}
+                  style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }}
                 />
               </div>
 
-              <button 
-                className={`${styles.btn} ${styles.btnPrimary}`} 
-                style={{width: '100%', marginTop: '1.5rem'}}
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                style={{ width: '100%', marginTop: '1.5rem' }}
                 onClick={handleCheckout}
                 disabled={loadingCheckout}
               >
                 {loadingCheckout ? "Creando tu suscripción en 4Geeks..." : "Iniciar Patrocinio"}
               </button>
             </div>
-            
-            <div style={{marginTop: '2rem'}}>
+
+            <div style={{ marginTop: '2rem' }}>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setStep(1)}>Recalcular</button>
             </div>
           </div>

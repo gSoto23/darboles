@@ -28,7 +28,7 @@ export default function Navbar() {
       }
     };
     checkUser();
-    
+
     // We can listen to a custom event if we want immediate updates from login page
     const onAuthChange = () => checkUser();
     window.addEventListener('auth_change', onAuthChange);
@@ -53,9 +53,9 @@ export default function Navbar() {
         <Link href="/" className={styles.brand} style={{ display: 'flex', alignItems: 'center' }} onClick={handleLinkClick}>
           <img src="/logo.png" alt="Dárboles Logo" width={120} height={32} style={{ objectFit: 'contain' }} />
         </Link>
-        
+
         {/* Hamburger Button (Mobile only) */}
-        <button 
+        <button
           className={styles.hamburgerBtn}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
@@ -75,18 +75,18 @@ export default function Navbar() {
 
         {/* Desktop Links & Mobile Dropdown */}
         <div className={`${styles.links} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
-          <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>Mercado Local</Link>
-          <Link href="/suscripciones" className={styles.link} onClick={handleLinkClick}>Net-Zero Global</Link>
+          <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>Tienda Arboles</Link>
+          <Link href="/suscripciones" className={styles.link} onClick={handleLinkClick}>Net-Zero CO2</Link>
           <Link href="/transparencia" className={styles.link} onClick={handleLinkClick}>Transparencia</Link>
-          
+
           {sessionUser ? (
             <div className={styles.authGroup}>
               <Link href={sessionUser.is_admin ? "/admin" : "/dashboard"} className={styles.cta} style={{ background: 'transparent', border: '1px solid var(--color-foreground)', color: 'var(--color-foreground)' }} onClick={handleLinkClick}>
                 {sessionUser.is_admin ? "Panel Admin" : "Mi Impacto"}
               </Link>
-              <button 
-                onClick={handleLogout} 
-                className={styles.logoutBtn} 
+              <button
+                onClick={handleLogout}
+                className={styles.logoutBtn}
                 title="Cerrar Sesión"
               >
                 <div style={{ display: 'none' }} className="mobileLogoutText">Cerrar Sesión</div>

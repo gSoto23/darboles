@@ -14,8 +14,8 @@ export default function Footer() {
         <div className={styles.links}>
           <div className={styles.linkGroup}>
             <span className={styles.linkTitle}>Plataforma</span>
-            <Link href="/suscripciones" className={styles.link}>Net-Zero Subscriptions</Link>
-            <Link href="/regalos" className={styles.link}>Local Gifting</Link>
+            <Link href="/suscripciones" className={styles.link}>Net-Zero CO2</Link>
+            <Link href="/regalos" className={styles.link}>Tienda de Arboles</Link>
             <Link href="/empresas" className={styles.link}>Soluciones B2B</Link>
           </div>
           <div className={styles.linkGroup}>

@@ -88,30 +88,30 @@ export default function DashboardPage() {
   if (!mounted || isLoading) return <Loader />;
 
   const totalTrees = subscriptions.reduce((acc, sub) => acc + sub.quantity, 0);
-  const totalKgPerYear = totalTrees * 25; 
+  const totalKgPerYear = totalTrees * 25;
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
-    
+
     // Validate passwords if changing
     if (newPassword && !currentPassword) {
       toast.error("Debes ingresar la contraseña actual para cambiarla");
       return;
     }
-    
+
     try {
       const payload: any = {
-         full_name: editName,
-         email: editEmail,
-         whatsapp: editWhatsapp,
-         address: editAddress
+        full_name: editName,
+        email: editEmail,
+        whatsapp: editWhatsapp,
+        address: editAddress
       };
       if (newPassword) {
-         payload.new_password = newPassword;
-         payload.current_password = currentPassword;
+        payload.new_password = newPassword;
+        payload.current_password = currentPassword;
       }
-      
+
       const res = await fetch('http://localhost:8001/api/v1/auth/me', {
         method: 'PATCH',
         headers: {
@@ -120,21 +120,21 @@ export default function DashboardPage() {
         },
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) {
         const err = await res.json();
         toast.error(err.detail || "Error al actualizar el perfil");
         return;
       }
-      
+
       const u = await res.json();
       setUser(u);
-      
+
       if (payload.new_password || payload.email !== user?.email) {
-         toast.success("Credenciales actualizadas. Por favor, re-inicia sesión.");
-         localStorage.removeItem('token');
-         router.push('/login');
-         return;
+        toast.success("Credenciales actualizadas. Por favor, re-inicia sesión.");
+        localStorage.removeItem('token');
+        router.push('/login');
+        return;
       }
 
       toast.success("Perfil actualizado correctamente");
@@ -162,7 +162,7 @@ export default function DashboardPage() {
       } else {
         toast.error("Error al cancelar la suscripción");
       }
-    } catch(err) {
+    } catch (err) {
       toast.error("Ocurrió un error en la plataforma");
       console.error(err);
     }
@@ -171,26 +171,30 @@ export default function DashboardPage() {
   const tableColumns = [
     { key: 'id', label: 'ID Suscripción', render: (row: any) => <strong>#{row.id}</strong> },
     { key: 'quantity', label: 'Árboles Asignados', render: (row: any) => `🌳 ${row.quantity}` },
-    { key: 'amount_usd', label: 'Facturación Mensual', render: (row: any) => <span style={{color: 'var(--color-accent)', fontWeight: 600}}>${row.amount_usd?.toFixed(2) || '0.00'} USD</span> },
-    { key: 'status', label: 'Estado', render: (row: any) => (
-       <span style={{ 
-         padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '1rem',
-         background: row.status === 'active' ? 'var(--color-accent)' : 'var(--color-border)', 
-         color: row.status === 'active' ? 'white' : 'var(--color-foreground)' 
-       }}>
-         {row.status.toUpperCase()}
-       </span>
-    )},
-    { key: 'actions', label: 'Gestión', render: (row: any) => (
-       <button onClick={() => setViewInvoiceSub(row)} style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'transparent', cursor: 'pointer', fontSize: '0.8rem' }}>Ver Detalle</button>
-    )}
+    { key: 'amount_usd', label: 'Facturación Mensual', render: (row: any) => <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>${row.amount_usd?.toFixed(2) || '0.00'} USD</span> },
+    {
+      key: 'status', label: 'Estado', render: (row: any) => (
+        <span style={{
+          padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '1rem',
+          background: row.status === 'active' ? 'var(--color-accent)' : 'var(--color-border)',
+          color: row.status === 'active' ? 'white' : 'var(--color-foreground)'
+        }}>
+          {row.status.toUpperCase()}
+        </span>
+      )
+    },
+    {
+      key: 'actions', label: 'Gestión', render: (row: any) => (
+        <button onClick={() => setViewInvoiceSub(row)} style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'transparent', cursor: 'pointer', fontSize: '0.8rem' }}>Ver Detalle</button>
+      )
+    }
   ];
 
   return (
     <div style={{ paddingTop: '100px', minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
       <main className={`page-container slide-up`}>
         <div style={{ marginBottom: '3rem', marginTop: '2rem' }}>
-          <button 
+          <button
             onClick={() => setIsProfileModalOpen(true)}
             style={{ padding: '0.5rem 1rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '2rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', marginBottom: '1rem' }}
           >
@@ -203,7 +207,7 @@ export default function DashboardPage() {
             Este es tu centro de impacto personal. Desde aquí rastrearemos el crecimiento en tiempo real de tu esfuerzo directo para combatir el cambio climático de forma radicalmente transparente.
           </p>
         </div>
-        
+
         <div className={styles.dashboardGrid}>
           <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', padding: '3rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <h3 style={{ marginBottom: '1rem', color: 'var(--color-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tu Bosque Expandido</h3>
@@ -212,13 +216,13 @@ export default function DashboardPage() {
               <div style={{ fontSize: '1.1rem', color: 'var(--color-muted)', fontWeight: 500, paddingBottom: '0.5rem' }}>Árboles Asignados</div>
             </div>
             <p style={{ color: 'var(--color-muted)', marginTop: '2rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              Tus suscripciones garantizan que estos árboles sean georreferenciados y protegidos en nuestras fincas de Costa Rica.
+              Tus suscripciones garantizan que estos árboles sean georreferenciados y protegidos en nuestras fincas.
             </p>
             {totalTrees === 0 && (
               <button onClick={() => router.push('/suscripciones')} className={`${styles.btnAction}`} style={{ marginTop: '2rem', padding: '1rem 2rem', background: 'var(--color-accent)', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Explorar Suscripciones</button>
             )}
           </div>
-          
+
           <div style={{ background: 'var(--color-foreground)', color: 'var(--color-background)', padding: '3rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
             <h3 style={{ marginBottom: '1rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Mitigación Anual (Estimada)</h3>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
@@ -243,7 +247,7 @@ export default function DashboardPage() {
           <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '500px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Configuración de Perfil</h2>
-              <button 
+              <button
                 onClick={() => setIsProfileModalOpen(false)}
                 style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-muted)' }}
               >×</button>
@@ -263,8 +267,8 @@ export default function DashboardPage() {
                   <input type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)} placeholder="+506..." />
                 </div>
                 <div>
-                   <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Dirección u Organización</label>
-                   <input type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="SJ, Costa Rica" />
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Dirección u Organización</label>
+                  <input type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="SJ, Costa Rica" />
                 </div>
               </div>
 
@@ -293,12 +297,12 @@ export default function DashboardPage() {
           <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '600px', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Trazabilidad de Cobros (Suscripción #{viewInvoiceSub.id})</h2>
-              <button 
+              <button
                 onClick={() => setViewInvoiceSub(null)}
                 style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-muted)' }}
               >×</button>
             </div>
-            
+
             <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.5rem', overflow: 'hidden', marginBottom: '1.5rem' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
@@ -314,12 +318,12 @@ export default function DashboardPage() {
                       <td style={{ padding: '0.8rem 1rem', fontSize: '0.85rem' }}>{inv.invoice_date}</td>
                       <td style={{ padding: '0.8rem 1rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-foreground)' }}>${inv.amount_usd.toFixed(2)} USD</td>
                       <td style={{ padding: '0.8rem 1rem' }}>
-                         <span style={{ padding: '0.2rem 0.5rem', background: inv.status === 'paid' ? 'var(--color-accent)' : 'var(--color-border)', color: inv.status === 'paid' ? 'white' : 'var(--color-foreground)', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: 600 }}>{inv.status.toUpperCase()}</span>
+                        <span style={{ padding: '0.2rem 0.5rem', background: inv.status === 'paid' ? 'var(--color-accent)' : 'var(--color-border)', color: inv.status === 'paid' ? 'white' : 'var(--color-foreground)', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: 600 }}>{inv.status.toUpperCase()}</span>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                       <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--color-muted)' }}>Aún no hay facturas emitidas para este ciclo.</td>
+                      <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--color-muted)' }}>Aún no hay facturas emitidas para este ciclo.</td>
                     </tr>
                   )}
                 </tbody>
@@ -327,7 +331,7 @@ export default function DashboardPage() {
             </div>
 
             {viewInvoiceSub.status === 'active' && (
-              <button 
+              <button
                 onClick={() => handleCancelSubscription(viewInvoiceSub.id)}
                 style={{ width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
               >
