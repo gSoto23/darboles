@@ -11,12 +11,6 @@
   transition: all 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .navContainer {
-    background: rgba(10, 10, 10, 0.95);
-  }
-}
-
 .nav {
   display: flex;
   justify-content: space-between;
@@ -118,12 +112,6 @@
     transform: translateY(-10px);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     border: none;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .links {
-      background: rgba(10, 10, 10, 0.98);
-    }
   }
 
   .links.mobileOpen {

@@ -19,19 +19,26 @@ export const metadata: Metadata = {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ToasterProvider from "@/components/ToasterProvider";
+import { cookies } from "next/headers";
+import { TranslationProvider } from "@/context/TranslationContext";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get("NEXT_LOCALE")?.value || "es";
+
   return (
-    <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${outfit.variable}`}>
       <body>
-        <ToasterProvider />
-        <Navbar />
-        {children}
-        <Footer />
+        <TranslationProvider initialLocale={locale}>
+          <ToasterProvider />
+          <Navbar />
+          {children}
+          <Footer />
+        </TranslationProvider>
       </body>
     </html>
   );

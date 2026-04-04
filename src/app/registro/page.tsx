@@ -4,8 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from '../login/auth.module.css'; // Reutilizamos los estilos del login
+import { useTranslations } from '@/context/TranslationContext';
 
 export default function RegisterPage() {
+  const { t } = useTranslations();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -41,14 +43,14 @@ export default function RegisterPage() {
     <div className={styles.authContainer}>
       <div className={`${styles.authCard} slide-up`}>
         <div className={styles.brand}>Dárboles</div>
-        <h1 className={styles.title}>Crear cuenta</h1>
-        <p className={styles.subtitle}>Únete y comienza a neutralizar tu impacto ambiental hoy mismo.</p>
+        <h1 className={styles.title}>{t("auth.reg.title")}</h1>
+        <p className={styles.subtitle}>{t("auth.reg.sub")}</p>
         
         {error && <div className={styles.errorMsg}>{error}</div>}
 
         <form onSubmit={handleRegister}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Nombre Completo</label>
+            <label className={styles.label}>{t("auth.reg.name")}</label>
             <input 
               type="text" 
               className={styles.input} 
@@ -59,7 +61,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Correo Electrónico</label>
+            <label className={styles.label}>{t("auth.login.email")}</label>
             <input 
               type="email" 
               className={styles.input} 
@@ -70,7 +72,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Contraseña</label>
+            <label className={styles.label}>{t("auth.login.pass")}</label>
             <input 
               type="password" 
               className={styles.input} 
@@ -81,11 +83,11 @@ export default function RegisterPage() {
               minLength={6}
             />
           </div>
-          <button type="submit" className={styles.submitBtn}>Registrarse</button>
+          <button type="submit" className={styles.submitBtn}>{t("auth.reg.btn")}</button>
         </form>
 
         <Link href="/login" className={styles.switchLink}>
-          ¿Ya tienes cuenta? <span>Inicia sesión aquí</span>
+          {t("auth.reg.has_acc")} <span>{t("auth.reg.login")}</span>
         </Link>
       </div>
     </div>

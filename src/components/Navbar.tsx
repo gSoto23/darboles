@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './Navbar.module.css';
+import { useTranslations } from '@/context/TranslationContext';
 
 export default function Navbar() {
   const router = useRouter();
+  const { t, locale, setLocale } = useTranslations();
   const [sessionUser, setSessionUser] = useState<{ is_admin: boolean; is_superadmin: boolean } | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -75,14 +77,36 @@ export default function Navbar() {
 
         {/* Desktop Links & Mobile Dropdown */}
         <div className={`${styles.links} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
-          <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>Tienda Arboles</Link>
-          <Link href="/suscripciones" className={styles.link} onClick={handleLinkClick}>Net-Zero CO2</Link>
-          <Link href="/transparencia" className={styles.link} onClick={handleLinkClick}>Transparencia</Link>
+          <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>{t("navbar.store")}</Link>
+          <Link href="/suscripciones" className={styles.link} onClick={handleLinkClick}>{t("navbar.netzero")}</Link>
+          <Link href="/transparencia" className={styles.link} onClick={handleLinkClick}>{t("navbar.transparency")}</Link>
+
+          <button 
+            onClick={() => {
+              const newLocale = locale === 'es' ? 'en' : 'es';
+              setLocale(newLocale);
+            }}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: 'var(--color-muted-light)', 
+              cursor: 'pointer', 
+              fontWeight: 400, 
+              fontSize: '0.85rem',
+              marginLeft: '0.5rem',
+              transition: 'color 0.2s ease',
+              opacity: 0.8
+            }}
+            onMouseOver={(e) => e.currentTarget.style.color = 'var(--color-foreground)'}
+            onMouseOut={(e) => e.currentTarget.style.color = 'var(--color-muted-light)'}
+          >
+            {t("navbar.langToggle")}
+          </button>
 
           {sessionUser ? (
             <div className={styles.authGroup}>
               <Link href={sessionUser.is_admin ? "/admin" : "/dashboard"} className={styles.cta} style={{ background: 'transparent', border: '1px solid var(--color-foreground)', color: 'var(--color-foreground)' }} onClick={handleLinkClick}>
-                {sessionUser.is_admin ? "Panel Admin" : "Mi Impacto"}
+                {sessionUser.is_admin ? t("navbar.admin") : t("navbar.impact")}
               </Link>
               <button
                 onClick={handleLogout}
@@ -98,7 +122,7 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <Link href="/login" className={styles.cta} onClick={handleLinkClick}>Iniciar Sesión</Link>
+            <Link href="/login" className={styles.cta} onClick={handleLinkClick}>{t("navbar.signin")}</Link>
           )}
         </div>
       </nav>

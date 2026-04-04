@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './Transparencia.module.css';
+import { useTranslations } from '@/context/TranslationContext';
 
 // Animated Counter Hook
 function useCountUp(end: number, duration: number = 2000) {
@@ -37,6 +38,7 @@ function useCountUp(end: number, duration: number = 2000) {
 }
 
 export default function TransparenciaPage() {
+  const { t } = useTranslations();
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [stats, setStats] = useState({ 
     capacity_trees: 0, 
@@ -69,17 +71,17 @@ export default function TransparenciaPage() {
       <main className="page-container slide-up">
         
         <header className={styles.intro}>
-          <span className={styles.badge}>Dárboles Trust</span>
-          <h1 className={styles.title}>Radicalmente Reales.</h1>
+          <span className={styles.badge}>{t("transparencia.badge")}</span>
+          <h1 className={styles.title}>{t("transparencia.title")}</h1>
           <p className={styles.subtitle}>
-            A diferencia del "greenwashing" de las corporaciones tradicionales, operamos bajo un esquema científico de reforestación. Cada decisión, desde nuestro motor matemático hasta el empaque del árbol, tiene un porqué verificado.
+            {t("transparencia.subtitle")}
           </p>
         </header>
 
         <section className={styles.grid}>
           {/* Seccion 1: Eliminacion Huella Carbono */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle} style={{ marginBottom: '0.5rem' }}>I. Mitigación Biológica de CO₂</h2>
+            <h2 className={styles.sectionTitle} style={{ marginBottom: '0.5rem' }}>{t("transparencia.sec1.title")}</h2>
             
             {/* Animated Inventory Graphic UI */}
             <div className={styles.chartCard}>
@@ -103,7 +105,7 @@ export default function TransparenciaPage() {
                   <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--color-foreground)' }}>
                     {((stats.capacity_trees > 0 ? (animatedSoldTrees / stats.capacity_trees) : 0) * 100).toFixed(1)}%
                   </span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--color-muted)', fontWeight: 600, letterSpacing: '0.1em', marginTop: '0.25rem' }}>ASIGNADO</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-muted)', fontWeight: 600, letterSpacing: '0.1em', marginTop: '0.25rem' }}>{t("transparencia.sec1.assigned")}</span>
                 </div>
               </div>
 
@@ -111,32 +113,32 @@ export default function TransparenciaPage() {
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                 <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1.5rem' }}>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--color-muted)', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
-                    Capacidad Bruta del Proyecto (Fincas)
+                    {t("transparencia.sec1.capTitle")}
                   </div>
                   <div className={styles.dataGrid}>
                     <div>
                       <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, color: 'var(--color-foreground)' }}>{animatedCapTrees.toLocaleString()}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>Total Árboles Plantados</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>{t("transparencia.sec1.capTrees")}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '2rem', fontWeight: 600, lineHeight: 1, color: 'var(--color-muted)' }}>{animatedCapTons.toLocaleString()}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>Toneladas CO₂ Base</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>{t("transparencia.sec1.capTons")}</div>
                     </div>
                   </div>
                 </div>
 
                 <div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
-                    Impacto Generado por Suscriptores
+                    {t("transparencia.sec1.impTitle")}
                   </div>
                   <div className={styles.dataGrid}>
                     <div>
                       <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, color: 'var(--color-accent)' }}>{animatedSoldTrees.toLocaleString()}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>Árboles Ya Asignados</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>{t("transparencia.sec1.impTrees")}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '2rem', fontWeight: 600, lineHeight: 1, color: 'var(--color-accent)' }}>{animatedSoldTons.toLocaleString()}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>Toneladas CO₂ Mitigadas</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>{t("transparencia.sec1.impTons")}</div>
                     </div>
                   </div>
                 </div>
@@ -147,13 +149,13 @@ export default function TransparenciaPage() {
             <div className={styles.contentRow}>
               <div className={styles.textContent}>
                 <p className={styles.textBlock}>
-                  Nuestro proyecto de eliminación de huella de carbono no trata sobre comprar "cripto-créditos" invisibles. Apuntamos a la <strong>extracción biomásica real</strong>. 
+                  {t("transparencia.sec1.p1")}
                 </p>
                 <p className={styles.textBlock}>
-                  Cuando adquieres una suscripción Net-Zero, financiamos estrictamente la plantación y el cuidado activo de árboles nativos en fincas protegidas de Costa Rica (hub neurálgico de biodiversidad global). Un árbol genérico trópico captura alrededor de ~25 kg de CO₂ por año una vez maduro.
+                  {t("transparencia.sec1.p2")}
                 </p>
                 <p className={styles.textBlock}>
-                  Dárboles garantiza que esa fracción de la finca se registre a tu nombre, mitigando el carbono emitido por tu ritmo de vida y emitiendo oxígeno puro a cambio.
+                  {t("transparencia.sec1.p3")}
                 </p>
               </div>
             </div>
@@ -161,31 +163,31 @@ export default function TransparenciaPage() {
 
           {/* Seccion 2: La Calculadora */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>II. La Matemática de nuestra Calculadora</h2>
+            <h2 className={styles.sectionTitle}>{t("transparencia.sec2.title")}</h2>
             <div className={styles.contentRow}>
               <div className={styles.textContent}>
                 <p className={styles.textBlock}>
-                  Nuestra calculadora de huella de carbono fue diseñada para ser asertiva sin ser agobiante. Toma los estándares de la <i>EPA</i> y parámetros mundiales y los reduce a los factores de más alto impacto y variación:
+                  {t("transparencia.sec2.p1")}
                 </p>
                 <div className={styles.statGrid}>
                   <div className={styles.statBox}>
                     <div className={styles.statValue}>0.20 kg</div>
-                    <div className={styles.statLabel}>CO₂ / km conducido en promedio.</div>
+                    <div className={styles.statLabel}>{t("transparencia.sec2.stat1")}</div>
                   </div>
                   <div className={styles.statBox}>
                     <div className={styles.statValue}>250 kg</div>
-                    <div className={styles.statLabel}>CO₂ promedio por hora de vuelo comercial.</div>
+                    <div className={styles.statLabel}>{t("transparencia.sec2.stat2")}</div>
                   </div>
                 </div>
                 <p className={styles.textBlock} style={{marginTop: '2rem'}}>
-                  A esto se le suma un modelo escalonado basado en dieta: Una persona con una dieta basada en carne emite casi una tonelada métrica anual adicional respecto de una dieta basada en plantas, esto debido al alto coste de metano y deforestación ganadera. Por ello, estas 3 variables nos arrojan una precisión del 90% del impacto ecológico directo anual de un individuo en segundos.
+                  {t("transparencia.sec2.p2")}
                 </p>
 
                 <button 
                   className={styles.auditLink} 
                   onClick={() => setIsAuditModalOpen(true)}
                 >
-                  🔗 Ver Ficha Técnica de Auditoría Ambiental
+                  {t("transparencia.sec2.btn")}
                 </button>
               </div>
             </div>
@@ -193,17 +195,17 @@ export default function TransparenciaPage() {
 
           {/* Seccion 3: Empaque Base Zero Waste */}
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>III. Diseño Industrial Plantable (Zero Waste)</h2>
+            <h2 className={styles.sectionTitle}>{t("transparencia.sec3.title")}</h2>
             <div className={styles.contentRow}>
               <div className={styles.textContent}>
                 <p className={styles.textBlock}>
-                  El mercado local de regalos suele entregar plantas en bolsas plásticas agrícolas negras (las cuales toman 500 años en degradarse). Desarrollamos un <strong>empaque revolucionario 100% libre de residuos.</strong>
+                  {t("transparencia.sec3.p1")}
                 </p>
                 <p className={styles.textBlock}>
-                  Nuestra icónica caja hexagonal de cartón <i>kraft</i> estructural cuenta con un diseño de asa y anillo central, protegiendo al árbol durante su transporte. La gran diferencia reside en la siembra: <strong>No debes desempacarlo.</strong>
+                  {t("transparencia.sec3.p2")}
                 </p>
                 <p className={styles.textBlock}>
-                  El empaque está pensado para sembrarse integro directo en la tierra. La caja protege las delicadas raíces del shock de trasplante y, al regarse, el cartón no tratado se biodegrada en semanas convirtiéndose en abono orgánico para alimentar al propio árbol. Diseño circular en su máxima expresión.
+                  {t("transparencia.sec3.p3")}
                 </p>
               </div>
               <div className={styles.figure}>
@@ -222,8 +224,8 @@ export default function TransparenciaPage() {
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
                <div>
-                 <h3 className={styles.modalTitle}>Documentación de Auditoría</h3>
-                 <div className={styles.modalSubtitle}>Fórmulas Matemáticas y Referencias Científicas de la Calculadora Dárboles.</div>
+                 <h3 className={styles.modalTitle}>{t("transparencia.modal.title")}</h3>
+                 <div className={styles.modalSubtitle}>{t("transparencia.modal.subtitle")}</div>
                </div>
                <button 
                  type="button" 
@@ -236,58 +238,58 @@ export default function TransparenciaPage() {
 
             <div className={styles.modalBody}>
               <div className={styles.auditSection}>
-                <h4>1. Ecuación General de Mitigación Anual</h4>
+                <h4>{t("transparencia.modal.sec1")}</h4>
                 <code className={styles.auditFormula}>T(e) = Base(país) + (V × C_car) + (F × C_flight) + (D)</code>
                 <p style={{fontSize: '0.9rem', color: 'var(--color-muted)'}}>
-                  Donde <strong>T(e)</strong> representa la Emisión Total Anual Estimada en kilogramos (kg) para un usuario.
+                   {t("transparencia.modal.sec1.desc")}
                 </p>
               </div>
 
               <div className={styles.auditSection}>
-                <h4>2. Desglose de Constantes y Referencias</h4>
+                <h4>{t("transparencia.modal.sec2")}</h4>
                 <ul>
                   <li>
-                    <strong>Factor de Movilidad Terrestre (V)</strong>
+                    <strong>{t("transparencia.modal.sec2.v")}</strong>
                     <div style={{marginTop: '0.5rem', marginBottom: '0.5rem'}}>
                       Constante <code className={styles.auditConstant}>C_car = 0.20 kg / km</code>
                     </div>
                     <code className={styles.auditFormula}>V_anual = (Km × Semana) × 52 × 0.20</code>
                     <span className={styles.auditRef}>
-                      Referencia Auditada: Agencia de Protección Ambiental de Estados Unidos (EPA) - "Greenhouse Gas Emissions from a Typical Passenger Vehicle" (Revisado: Septiembre 2025). Refleja un promedio moderado de eficiencia de sedán/SUV subcompacto.
+                      {t("transparencia.modal.sec2.v.ref")}
                     </span>
                   </li>
                   <li>
-                    <strong>Factor de Vuelo Comercial (F)</strong>
+                    <strong>{t("transparencia.modal.sec2.f")}</strong>
                     <div style={{marginTop: '0.5rem', marginBottom: '0.5rem'}}>
                       Constante <code className={styles.auditConstant}>C_flight = 250 kg / hr</code>
                     </div>
                     <code className={styles.auditFormula}>F_anual = Horas de vuelo × 250</code>
                     <span className={styles.auditRef}>
-                      Referencia Auditada: Metodología del Carbon Neutral Protocol & Defra (UK Department for Environment, Food & Rural Affairs) Emission Factors (Revisado: Enero 2026). Integra Fuerza Radiativa Adicional (RFI).
+                      {t("transparencia.modal.sec2.f.ref")}
                     </span>
                   </li>
                   <li>
-                    <strong>Factor de Alimentación Diaria (D)</strong>
+                    <strong>{t("transparencia.modal.sec2.d")}</strong>
                     <div style={{marginTop: '0.5rem', marginBottom: '0.5rem'}}>
                       <code className={styles.auditConstant}>Vegano = 0 kg</code> | <code className={styles.auditConstant}>Vegetariano = +400 kg</code> | <code className={styles.auditConstant}>Omnívoro = +1,000 kg</code>
                     </div>
                     <span className={styles.auditRef}>
-                      Referencia Auditada: Basado en el estudio de Scarborough et al. (Oxford) sobre emisiones de gases de efecto invernadero de dietas autoseleccionadas, complementadas con datos de impacto de metano de la FAO (Revisado: Marzo 2025).
+                      {t("transparencia.modal.sec2.d.ref")}
                     </span>
                   </li>
                 </ul>
               </div>
 
               <div className={styles.auditSection}>
-                <h4>3. Equivalencia de Captura Forestal</h4>
+                <h4>{t("transparencia.modal.sec3")}</h4>
                 <p style={{fontSize: '0.9rem', color: 'var(--color-muted)', lineHeight: '1.6'}}>
-                  Las suscripciones mitigan T(e) asignando inventario primario de árboles plantados en ecosistemas tropicales protegidos en Costa Rica.
+                  {t("transparencia.modal.sec3.p")}
                 </p>
                 <div style={{marginTop: '0.5rem'}}>
-                  Estimación técnica conservadora: <code className={styles.auditConstant}>~25 - 28.5 kg CO₂ / año / árbol maduro</code>
+                  {t("transparencia.modal.sec3.est")} <code className={styles.auditConstant}>~25 - 28.5 kg CO₂ / año / árbol maduro</code>
                 </div>
                 <span className={styles.auditRef} style={{marginTop: '1rem'}}>
-                  Referencia Auditada: IPCC (Panel Intergubernamental del Cambio Climático) Guidelines for National Greenhouse Gas Inventories - Capítulos Bosques y Uso de la Tierra.
+                  {t("transparencia.modal.sec3.ref")}
                 </span>
               </div>
             </div>

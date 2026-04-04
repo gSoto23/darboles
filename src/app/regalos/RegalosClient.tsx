@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import styles from './Regalos.module.css';
-import { useTranslations } from '@/context/TranslationContext';
 
 interface TreeSpecies {
   id: number;
@@ -28,10 +27,8 @@ interface CartItem {
 }
 
 export default function RegalosPage() {
-  const { t } = useTranslations();
   const [trees, setTrees] = useState<TreeSpecies[]>([]);
   const [loading, setLoading] = useState(true);
-  const [country, setCountry] = useState('CR');
 
   // Shopping Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -68,18 +65,6 @@ export default function RegalosPage() {
         console.error("Error fetching trees:", err);
         setLoading(false);
       });
-
-    // Read NEXT_COUNTRY cookie
-    const getCookie = (name: string) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift();
-      return undefined;
-    };
-    const userCountry = getCookie('NEXT_COUNTRY');
-    if (userCountry) {
-      setCountry(userCountry);
-    }
   }, []);
 
   const resetConfigForm = () => {
@@ -182,15 +167,15 @@ export default function RegalosPage() {
     <div className={styles.container}>
       <main className="page-container slide-up">
         <header className={styles.intro}>
-          <span className={styles.badge}>{t("regalos.badge")}</span>
-          <h1 className={styles.title}>{t("regalos.title")}</h1>
+          <span className={styles.badge}>Regala un Arbol</span>
+          <h1 className={styles.title}>Regala Propósito.</h1>
           <p className={styles.subtitle}>
-            {t("regalos.subtitle")}
+            Arma tu carrito botánico. Puedes regalar diferentes especies a una misma persona o distribuir tu compra entre varios amigos. Todos recibirán un certificado único.
           </p>
         </header>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-muted)' }}>{t("regalos.loading")}</div>
+          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-muted)' }}>Cargando catálogo biológico...</div>
         ) : (
           <div className={styles.grid}>
             {trees.map((tree) => (
@@ -205,7 +190,7 @@ export default function RegalosPage() {
 
                   <div className={styles.metrics}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></svg>
-                    {t("regalos.metrics", { co2: tree.co2_capture_capacity_kg_per_year })}
+                    Captura {tree.co2_capture_capacity_kg_per_year}kg CO₂/año
                   </div>
 
                   <div className={styles.priceRow}>
@@ -214,7 +199,7 @@ export default function RegalosPage() {
                       className={styles.buyBtn}
                       onClick={() => handleStartConfig(tree)}
                     >
-                      {t("regalos.buyBtn")}
+                      Configurar Regalo
                     </button>
                   </div>
                 </div>
@@ -228,7 +213,7 @@ export default function RegalosPage() {
       {cartItems.length > 0 && !showCheckout && !configTree && (
         <button className={styles.floatingCartBtn} onClick={openCheckout}>
           <div className={styles.cartBadge}>{cartItems.length}</div>
-          {t("regalos.checkoutBtn")} (${cartTotalUsd})
+          Finalizar Compra (${cartTotalUsd})
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
         </button>
       )}
@@ -238,24 +223,18 @@ export default function RegalosPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{t("regalos.modalConfig.title")}</h3>
-              <div className={styles.modalSubtitle}>{t("regalos.modalConfig.subtitle")} <strong>{configTree.name}</strong> (${configTree.price_usd} c/u)</div>
+              <h3 className={styles.modalTitle}>Personaliza este Regalo</h3>
+              <div className={styles.modalSubtitle}>Vas a añadir: <strong>{configTree.name}</strong> (${configTree.price_usd} c/u)</div>
               <button type="button" className={styles.closeBtn} onClick={() => setConfigTree(null)}>×</button>
             </div>
 
             <div className={styles.modalBody}>
-              {country !== 'CR' && (
-                <div style={{ padding: '1rem', backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: '6px', marginBottom: '1.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                  <div>{t("regalos.modalConfig.internationalWarning")}</div>
-                </div>
-              )}
               <form onSubmit={handleAddToCart}>
 
                 <div className={styles.formSection}>
                   <div className={styles.formSectionTitle}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-                    {t("regalos.modalConfig.quantity")}
+                    ¿Cuántos de este tipo deseas añadir?
                   </div>
                   <div className={styles.quantitySelector}>
                     <button type="button" className={styles.quantityBtn} onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}>-</button>
@@ -265,46 +244,46 @@ export default function RegalosPage() {
                 </div>
 
                 <div className={styles.formSection}>
-                  <div className={styles.formSectionTitle}>{t("regalos.modalConfig.recipient")}</div>
+                  <div className={styles.formSectionTitle}>¿Para quién es?</div>
                   <div className={styles.formGrid}>
                     <div>
-                      <label className={styles.inputLabel}>{t("regalos.modalConfig.name")}</label>
-                      <input type="text" value={recipientName} onChange={e => setRecipientName(e.target.value)} required className={styles.inputField} />
+                      <label className={styles.inputLabel}>Nombre</label>
+                      <input type="text" value={recipientName} onChange={e => setRecipientName(e.target.value)} required className={styles.inputField} placeholder="Ej: María" />
                     </div>
                     <div>
-                      <label className={styles.inputLabel}>{t("regalos.modalConfig.lastName")}</label>
-                      <input type="text" value={recipientLastName} onChange={e => setRecipientLastName(e.target.value)} required className={styles.inputField} />
+                      <label className={styles.inputLabel}>Apellido</label>
+                      <input type="text" value={recipientLastName} onChange={e => setRecipientLastName(e.target.value)} required className={styles.inputField} placeholder="Ej: Pérez" />
                     </div>
                     <div>
-                      <label className={styles.inputLabel}>{t("regalos.modalConfig.email")}</label>
-                      <input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} required className={styles.inputField} />
+                      <label className={styles.inputLabel}>Correo</label>
+                      <input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} required className={styles.inputField} placeholder="Ej: maria@correo.com" />
                     </div>
                     <div>
-                      <label className={styles.inputLabel}>{t("regalos.modalConfig.whatsapp")}</label>
-                      <input type="tel" value={recipientWhatsapp} onChange={e => setRecipientWhatsapp(e.target.value)} required className={styles.inputField} />
+                      <label className={styles.inputLabel}>WhatsApp</label>
+                      <input type="tel" value={recipientWhatsapp} onChange={e => setRecipientWhatsapp(e.target.value)} required className={styles.inputField} placeholder="Ej: +506 8888 8888" />
                     </div>
                   </div>
                   <div style={{ marginTop: '1rem' }}>
-                    <label className={styles.inputLabel}>{t("regalos.modalConfig.address")}</label>
-                    <textarea value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} className={`${styles.inputField} ${styles.textareaField}`} style={{ minHeight: '60px' }}></textarea>
+                    <label className={styles.inputLabel}>Dirección de Envío (Opcional)</label>
+                    <textarea value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} className={`${styles.inputField} ${styles.textareaField}`} style={{ minHeight: '60px' }} placeholder="Ej: San José, Escazú..."></textarea>
                   </div>
                   <div style={{ marginTop: '1rem' }}>
-                    <label className={styles.inputLabel}>{t("regalos.modalConfig.message")}</label>
-                    <textarea value={message} onChange={e => setMessage(e.target.value)} className={`${styles.inputField} ${styles.textareaField}`}></textarea>
+                    <label className={styles.inputLabel}>Mensaje de dedicatoria (Opcional)</label>
+                    <textarea value={message} onChange={e => setMessage(e.target.value)} className={`${styles.inputField} ${styles.textareaField}`} placeholder="Escribe unas palabras bonitas..."></textarea>
                   </div>
                   <div style={{ marginTop: '1rem' }}>
-                    <label className={styles.inputLabel}>{t("regalos.modalConfig.date")}</label>
+                    <label className={styles.inputLabel}>Fecha programada de envío (Opcional)</label>
                     <input type="date" value={sendDate} onChange={e => setSendDate(e.target.value)} className={styles.inputField} />
                   </div>
                 </div>
 
                 <div className={styles.summaryBox}>
                   <div>
-                    <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>{t("regalos.modalConfig.subtotal")}</div>
+                    <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Subtotal</div>
                     <div className={styles.summaryTotal}>${configTree.price_usd * quantity} USD</div>
                   </div>
                   <button type="submit" className={styles.confirmBtn}>
-                    {t("regalos.modalConfig.addCart")}
+                    Añadir al Carrito
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
                   </button>
                 </div>
@@ -320,7 +299,7 @@ export default function RegalosPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{t("regalos.checkout.title")}</h3>
+              <h3 className={styles.modalTitle}>Tu Carrito de Regalos</h3>
               {!isSubmitting && checkoutStep !== 'success' && (
                 <button type="button" className={styles.closeBtn} onClick={() => setShowCheckout(false)}>×</button>
               )}
@@ -334,7 +313,7 @@ export default function RegalosPage() {
                       <div key={item.id} className={styles.cartItem}>
                         <div className={styles.cartItemInfo}>
                           <div className={styles.cartItemTitle}>{item.quantity}x {item.tree.name}</div>
-                          <div className={styles.cartItemSubtitle}>{t("regalos.checkout.for")} {item.recipientName}</div>
+                          <div className={styles.cartItemSubtitle}>Para: {item.recipientName}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           <span className={styles.cartItemPrice}>${item.tree.price_usd * item.quantity}</span>
@@ -347,7 +326,7 @@ export default function RegalosPage() {
 
                     {cartItems.length === 0 && (
                       <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-muted)' }}>
-                        {t("regalos.checkout.empty")}
+                        Carrito vacío.
                       </div>
                     )}
                   </div>
@@ -355,21 +334,21 @@ export default function RegalosPage() {
                   {cartItems.length > 0 && (
                     <>
                       <div className={styles.formSection}>
-                        <div className={styles.formSectionTitle}>{t("regalos.checkout.aboutYou")}</div>
+                        <div className={styles.formSectionTitle}>Sobre ti</div>
                         <div className={styles.formGrid}>
                           <div>
-                            <label className={styles.inputLabel}>{t("regalos.checkout.buyerName")}</label>
+                            <label className={styles.inputLabel}>Tu Nombre</label>
                             <input type="text" value={buyerName} onChange={e => setBuyerName(e.target.value)} required className={styles.inputField} />
                           </div>
                           <div>
-                            <label className={styles.inputLabel}>{t("regalos.checkout.buyerEmail")}</label>
+                            <label className={styles.inputLabel}>Tu Correo (Recibos)</label>
                             <input type="email" value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} required className={styles.inputField} />
                           </div>
                         </div>
                       </div>
 
                       <div className={styles.formSection}>
-                        <div className={styles.formSectionTitle}>{t("regalos.checkout.paymentMethod")}</div>
+                        <div className={styles.formSectionTitle}>Método de Pago</div>
                         <div className={styles.paymentMethods}>
                           <div className={`${styles.paymentMethodCard} ${paymentMethod === 'sinpe' ? styles.active : ''}`} onClick={() => setPaymentMethod('sinpe')}>
                             <h4>SINPE Móvil</h4>
@@ -384,7 +363,7 @@ export default function RegalosPage() {
                         {paymentMethod === 'sinpe' && (
                           <div className={styles.transferBox}>
                             <div className={styles.transferRow}>
-                              <span style={{ color: 'var(--color-muted)' }}>{t("regalos.checkout.totalAmount")}:</span>
+                              <span style={{ color: 'var(--color-muted)' }}>Monto a Transferir:</span>
                               <strong style={{ fontSize: '1.25rem' }}>${cartTotalUsd.toLocaleString()} / ₡{(cartTotalUsd * 515).toLocaleString()}</strong>
                             </div>
                             <div className={styles.transferRow}>
@@ -397,11 +376,11 @@ export default function RegalosPage() {
 
                       <div className={styles.summaryBox}>
                         <div>
-                          <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>{t("regalos.checkout.grandTotal")}</div>
+                          <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Gran Total</div>
                           <div className={styles.summaryTotal}>${cartTotalUsd.toLocaleString()} USD</div>
                         </div>
                         <button type="submit" className={styles.confirmBtn} disabled={isSubmitting}>
-                          {isSubmitting ? t("regalos.checkout.processing") : t("regalos.checkout.confirmOrder")}
+                          {isSubmitting ? "Procesando..." : "Confirmar Orden"}
                         </button>
                       </div>
                     </>
@@ -410,11 +389,11 @@ export default function RegalosPage() {
               ) : (
                 <div className={styles.successState}>
                   <div className={styles.successIcon}>✓</div>
-                  <h3 className={styles.modalTitle}>{t("regalos.checkout.successTitle")}</h3>
+                  <h3 className={styles.modalTitle}>¡Pedido Registrado con Éxito!</h3>
                   <p style={{ color: 'var(--color-muted)', marginBottom: '2rem', lineHeight: 1.6 }}>
-                    {t("regalos.checkout.successBody")}
+                    Hemos anotado los datos de todos los destinatarios y sus respectivos certificados. Se enviarán en las fechas programadas tras confirmar el pago.
                   </p>
-                  <button className={styles.confirmBtn} onClick={() => { setShowCheckout(false); setCheckoutStep('cart'); }} style={{ maxWidth: '200px', margin: '0 auto' }}>{t("regalos.checkout.backBtn")}</button>
+                  <button className={styles.confirmBtn} onClick={() => { setShowCheckout(false); setCheckoutStep('cart'); }} style={{ maxWidth: '200px', margin: '0 auto' }}>Volver al Catálogo</button>
                 </div>
               )}
             </div>

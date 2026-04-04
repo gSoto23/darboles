@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './auth.module.css';
 import toast from 'react-hot-toast';
+import { useTranslations } from '@/context/TranslationContext';
 
 export default function LoginPage() {
+  const { t } = useTranslations();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
@@ -42,12 +44,12 @@ export default function LoginPage() {
     <div className={styles.authContainer}>
       <div className={`${styles.authCard} slide-up`}>
         <div className={styles.brand}>Dárboles</div>
-        <h1 className={styles.title}>Iniciar sesión</h1>
-        <p className={styles.subtitle}>Ingresa a tu portal Net-Zero para gestionar tus suscripciones.</p>
+        <h1 className={styles.title}>{t("auth.login.title")}</h1>
+        <p className={styles.subtitle}>{t("auth.login.sub")}</p>
 
         <form onSubmit={handleLogin}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Correo Electrónico</label>
+            <label className={styles.label}>{t("auth.login.email")}</label>
             <input 
               type="email" 
               className={styles.input} 
@@ -58,7 +60,7 @@ export default function LoginPage() {
             />
           </div>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Contraseña</label>
+            <label className={styles.label}>{t("auth.login.pass")}</label>
             <input 
               type="password" 
               className={styles.input} 
@@ -69,13 +71,13 @@ export default function LoginPage() {
             />
           </div>
           <div style={{ textAlign: 'right', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
-            <a href="/recuperar" style={{ fontSize: '0.875rem', color: 'var(--color-muted)', textDecoration: 'none' }}>¿Olvidaste tu contraseña?</a>
+            <a href="/recuperar" style={{ fontSize: '0.875rem', color: 'var(--color-muted)', textDecoration: 'none' }}>{t("auth.login.forgot")}</a>
           </div>
-          <button type="submit" className={styles.submitBtn}>Entrar</button>
+          <button type="submit" className={styles.submitBtn}>{t("auth.login.btn")}</button>
         </form>
 
         <Link href="/registro" className={styles.switchLink}>
-          ¿No tienes cuenta? <span>Regístrate aquí</span>
+          {t("auth.login.no_acc")} <span>{t("auth.login.register")}</span>
         </Link>
       </div>
     </div>

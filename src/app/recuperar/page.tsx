@@ -3,8 +3,10 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from '../login/auth.module.css';
+import { useTranslations } from '@/context/TranslationContext';
 
 function RecuperarContent() {
+  const { t } = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -83,10 +85,10 @@ function RecuperarContent() {
         <div className={styles.brand}>Dárboles</div>
         <div className={styles.header}>
           <h1 className={styles.title}>
-            {token ? "Módulo de Seguridad" : "Recuperación"}
+            {token ? t("auth.recup.title1") : t("auth.recup.title2")}
           </h1>
           <p className={styles.subtitle}>
-            {token ? "Establece tu nueva llave criptográfica." : "Ingresa el correo asociado a tu cuenta."}
+            {token ? t("auth.recup.sub1") : t("auth.recup.sub2")}
           </p>
         </div>
 
@@ -97,7 +99,7 @@ function RecuperarContent() {
           /* PANTALLA SOLICITAR EMAIL */
           <form onSubmit={handleRequestReset}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Correo Electrónico</label>
+              <label className={styles.label}>{t("auth.login.email")}</label>
               <input 
                 type="email" 
                 className={styles.input} 
@@ -108,17 +110,17 @@ function RecuperarContent() {
               />
             </div>
             <button type="submit" className={styles.submitBtn} disabled={loading}>
-              {loading ? "Verificando..." : "Enviar Enlace Seguro"}
+              {loading ? "..." : t("auth.recup.btn1")}
             </button>
             <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-              <a href="/login" style={{ fontSize: '0.875rem', color: 'var(--color-muted)', textDecoration: 'none' }}>Volver al Login</a>
+              <a href="/login" style={{ fontSize: '0.875rem', color: 'var(--color-muted)', textDecoration: 'none' }}>{t("auth.recup.back")}</a>
             </div>
           </form>
         ) : (
           /* PANTALLA EXCLUSIVA PARA CAMBIAR PASSWORD */
           <form onSubmit={handleResetPassword}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Nueva Contraseña</label>
+              <label className={styles.label}>{t("auth.recup.newpass")}</label>
               <input 
                 type="password" 
                 className={styles.input} 
@@ -130,7 +132,7 @@ function RecuperarContent() {
               />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Confirmar Contraseña</label>
+              <label className={styles.label}>{t("auth.recup.confpass")}</label>
               <input 
                 type="password" 
                 className={styles.input} 
@@ -141,7 +143,7 @@ function RecuperarContent() {
               />
             </div>
             <button type="submit" className={styles.submitBtn} disabled={loading}>
-              {loading ? "Procesando..." : "Actualizar Acceso"}
+              {loading ? "..." : t("auth.recup.btn2")}
             </button>
           </form>
         )}
