@@ -148,6 +148,13 @@ export default function RegalosPage() {
 
       const data = await response.json();
 
+      if (!response.ok) {
+        console.error("Backend Error payload:", data);
+        alert(`Hubo un error de validación: ${JSON.stringify(data.detail || data)}`);
+        setIsSubmitting(false);
+        return;
+      }
+
       if (paymentMethod === 'card' && data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {

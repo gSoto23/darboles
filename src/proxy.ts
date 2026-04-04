@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 // Países que hablan español (Código ISO 2).
 const SPANISH_SPEAKING_COUNTRIES = ['ES', 'MX', 'CO', 'AR', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'GQ', 'PR'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // 1. Extrapolate country from Vercel's geo header if available
   const country = request.headers.get('x-vercel-ip-country') || 'US';
 

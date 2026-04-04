@@ -116,3 +116,75 @@ def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, at
     except Exception as e:
         print(f"Error enviando correo SMTP: {e}")
         return False
+
+def send_order_verified_email(to_email: str, buyer_name: str, order_id: str):
+    if not SMTP_SERVER or not SMTP_USERNAME:
+        print("="*60)
+        print(f"SIMULACIÓN DE CORREO (Verificación SINPE) -> Para: {to_email}")
+        print(f"Asunto: Pago Verificado - Pedido #{order_id}")
+        print("="*60)
+        return True
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"Pago Verificado - Pedido #{order_id}"
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = to_email
+
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
+        <h2 style="color: #0A0A0A;">Pago Recibido Exitosamente</h2>
+        <p style="color: #666666; font-size: 16px;">Hola {buyer_name},</p>
+        <p style="color: #666666; font-size: 16px;">Hemos validado tu transferencia SINPE. Tu pedido <strong>#{order_id}</strong> se encuentra ahora en proceso de preparación y logística para su envío o siembra correspondiente.</p>
+        <p style="color: #666666; font-size: 16px;">Te notificaremos una vez que la orden sea entregada.</p>
+        <p style="color: #999999; font-size: 14px; margin-top: 40px;">Gracias por apoyar el ecosistema Dárboles.</p>
+    </div>
+    """
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        from smtplib import SMTP
+        server = SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error enviando correo SMTP: {e}")
+        return False
+
+def send_order_delivered_email(to_email: str, recipient_name: str, tree_name: str, order_id: str):
+    if not SMTP_SERVER or not SMTP_USERNAME:
+        print("="*60)
+        print(f"SIMULACIÓN DE CORREO (Pedido Entregado) -> Para: {to_email}")
+        print(f"Asunto: Pedido Entregado - #{order_id}")
+        print("="*60)
+        return True
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"Tu regalo ha sido entregado - Pedido #{order_id}"
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = to_email
+
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
+        <h2 style="color: #0A0A0A;">Paquete Entregado</h2>
+        <p style="color: #666666; font-size: 16px;">Hola {recipient_name},</p>
+        <p style="color: #666666; font-size: 16px;">Tu ejemplar de <strong>{tree_name}</strong> ha sido exitosamente entregado al destinatario para su cuidado y siembra.</p>
+        <p style="color: #666666; font-size: 16px;">Agradecemos inmensamente tu participación activa en el proceso de regeneración climática. Cada acción cuenta.</p>
+        <p style="color: #999999; font-size: 14px; margin-top: 40px;">Equipo Dárboles.</p>
+    </div>
+    """
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        from smtplib import SMTP
+        server = SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error enviando correo SMTP: {e}")
+        return False

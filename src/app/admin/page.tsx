@@ -14,6 +14,25 @@ interface TreeSpecies {
   image_url: string;
 }
 
+interface Gift {
+  id: number;
+  buyer_name: string;
+  buyer_email: string;
+  tree_id: number;
+  quantity: number;
+  recipient_name: string;
+  recipient_last_name: string;
+  recipient_email: string;
+  recipient_whatsapp: string;
+  recipient_address?: string;
+  message?: string;
+  send_date?: string;
+  transaction_ref?: string;
+  status: string;
+  certificate_url?: string;
+  tree?: TreeSpecies;
+}
+
 interface Farm {
   id: number;
   name: string;
@@ -39,11 +58,16 @@ import Loader from '@/components/Loader';
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'pedidos' | 'suscripciones' | 'catalogo' | 'fincas' | 'usuarios'>('pedidos');
   const [trees, setTrees] = useState<TreeSpecies[]>([]);
+  const [gifts, setGifts] = useState<Gift[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Gift Modal
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
+  const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
 
   // New Farm Modal State
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
@@ -123,10 +147,25 @@ export default function AdminDashboard() {
     } catch(err) { console.error(err); }
   }
 
+  const fetchGifts = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:8001/api/v1/admin/gifts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setGifts(data);
+    } catch(err) { console.error(err); }
+  }
+
   useEffect(() => {
     if (!isAdmin) return;
     const token = localStorage.getItem('token');
 
+    if (activeTab === 'pedidos') {
+      fetchGifts();
+    }
     if (activeTab === 'catalogo') {
       fetch('http://localhost:8001/api/v1/admin/trees')
         .then(res => res.json())
@@ -246,6 +285,26 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleUpdateGiftStatus = async (giftId: number, newStatus: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`http://localhost:8001/api/v1/admin/gifts/${giftId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        fetchGifts();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!isAdmin) return <Loader />;
 
   return (
@@ -313,16 +372,39 @@ export default function AdminDashboard() {
         {activeTab === 'pedidos' && (
           <div className="slide-up">
              <SmartTable 
-              data={[
-                { id: 'ORD-891', client: 'Prueba Local', tree: 'Cedro Amargo', ref: 'SINPE-12345', status: 'Verificado' },
-                { id: 'ORD-892', client: 'María Conejo', tree: 'Corteza Amarilla', ref: 'SINPE-99121', status: 'Validando SINPE' }
-              ]} 
+              data={gifts} 
               columns={[
                 { key: 'id', label: 'ID Pedido', render: (row: any) => `#${row.id}` },
-                { key: 'client', label: 'Cliente', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.client}</span> },
-                { key: 'tree', label: 'Árbol Solicitado' },
-                { key: 'ref', label: 'Referencia Bancaria', render: (row: any) => <span style={{ color: 'var(--color-muted)' }}>{row.ref}</span> },
-                { key: 'status', label: 'Estado', render: (row: any) => <span className={`${styles.statusBadge} ${row.status === 'Verificado' ? styles.statusSuccess : styles.statusPending}`}>{row.status}</span> }
+                { key: 'client', label: 'Cliente', render: (row: any) => <><span style={{ fontWeight: 500 }}>{row.buyer_name}</span><div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{row.buyer_email}</div></> },
+                { key: 'tree', label: 'Árbol Solicitado', render: (row: any) => row.tree ? `${row.quantity}x ${row.tree.name}` : `${row.quantity}x Especie ID: ${row.tree_id}` },
+                { key: 'ref', label: 'Referencia Bancaria', render: (row: any) => <span style={{ color: 'var(--color-muted)' }}>{row.transaction_ref || 'N/A'}</span> },
+                { key: 'status', label: 'Estado', render: (row: any) => (
+                  <span className={`${styles.statusBadge} ${row.status === 'verified' || row.status === 'delivered' || row.status === 'sent' ? styles.statusSuccess : styles.statusPending}`}>
+                    {row.status === 'verified' ? 'Verificado' : row.status === 'delivered' ? 'Entregado' : row.status === 'sent' ? 'Enviado' : row.status === 'pending' ? 'Pendiente' : row.status}
+                  </span>
+                ) },
+                { key: 'actions', label: 'Acciones', render: (row: any) => (
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button 
+                        onClick={() => { setSelectedGift(row); setIsGiftModalOpen(true); }}
+                        style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', cursor: 'pointer', background: 'transparent', fontSize: '0.8rem' }}
+                      >Detalle</button>
+                      
+                      {row.status === 'pending' && row.transaction_ref?.startsWith('LOCAL-') && (
+                        <button 
+                          onClick={() => handleUpdateGiftStatus(row.id, 'verified')}
+                          style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: 'none', background: '#22c55e', color: 'white', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                        >Validar SINPE</button>
+                      )}
+                      
+                      {(row.status === 'verified' || row.status === 'sent') && (
+                        <button 
+                          onClick={() => handleUpdateGiftStatus(row.id, 'delivered')}
+                          style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: 'none', background: '#3b82f6', color: 'white', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                        >Marcar Entregado</button>
+                      )}
+                    </div>
+                )}
               ]} 
             />
           </div>
@@ -516,6 +598,87 @@ export default function AdminDashboard() {
               <button type="submit" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer' }}>Guardar Especie</button>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- GIFT DETAIL MODAL --- */}
+      {isGiftModalOpen && selectedGift && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+          <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '600px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Detalle de Pedido #{selectedGift.id}</h2>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>{selectedGift.transaction_ref} - {selectedGift.status}</span>
+              </div>
+              <button 
+                onClick={() => { setIsGiftModalOpen(false); setSelectedGift(null); }}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-muted)' }}
+              >×</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-surface)' }}>
+                <h3 style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Datos del Comprador</h3>
+                <p style={{ margin: '0.2rem 0', fontWeight: 500 }}>{selectedGift.buyer_name}</p>
+                <p style={{ margin: '0.2rem 0', color: 'var(--color-muted)', fontSize: '0.9rem' }}>{selectedGift.buyer_email}</p>
+              </div>
+
+              <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-surface)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Destinatario y Entrega</h3>
+                    <p style={{ margin: '0.2rem 0', fontWeight: 500 }}>{selectedGift.recipient_name} {selectedGift.recipient_last_name}</p>
+                    <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>Email: {selectedGift.recipient_email}</p>
+                    <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>WhatsApp: {selectedGift.recipient_whatsapp}</p>
+                  </div>
+                  {selectedGift.recipient_whatsapp && (
+                    <a 
+                      href={`https://wa.me/${selectedGift.recipient_whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${selectedGift.recipient_name}, somos Dárboles. Tengo un presente que entregarle, ¿me compartes la ubicación donde puedo hacer la entrega por favor?`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: '0.5rem 1rem', background: '#25D366', color: '#fff', textDecoration: 'none', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                    >
+                      <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg> 
+                      Contactar
+                    </a>
+                  )}
+                </div>
+                {selectedGift.recipient_address && (
+                  <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>Dirección: {selectedGift.recipient_address}</p>
+                )}
+                {selectedGift.send_date && (
+                  <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>Fecha Solicitada: {selectedGift.send_date}</p>
+                )}
+                {selectedGift.message && (
+                  <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: 'rgba(0,0,0,0.03)', borderRadius: '4px', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                    "{selectedGift.message}"
+                  </div>
+                )}
+              </div>
+
+              <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-surface)' }}>
+                <h3 style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Árboles Solicitados</h3>
+                {selectedGift.tree ? (
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    {selectedGift.tree.image_url && (
+                      <div style={{ width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', background: '#ccc' }}>
+                        <img src={selectedGift.tree.image_url} alt={selectedGift.tree.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                    <div>
+                      <p style={{ margin: '0', fontWeight: 600 }}>{selectedGift.quantity}x {selectedGift.tree.name}</p>
+                      <p style={{ margin: '0', fontSize: '0.85rem', color: 'var(--color-muted)' }}>{selectedGift.tree.scientific_name}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>ID Especie: {selectedGift.tree_id} (Cantidad: {selectedGift.quantity})</p>
+                )}
+              </div>
+
+            </div>
+
           </div>
         </div>
       )}
