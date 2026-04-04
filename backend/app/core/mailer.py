@@ -2,6 +2,7 @@ import os
 from smtplib import SMTP_SSL, SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 
 # Configuraciones de Entorno
 SMTP_SERVER = os.getenv("SMTP_SERVER", "")
@@ -49,6 +50,62 @@ def send_reset_password_email(to_email: str, token: str):
 
     try:
         # Se asume uso de TLS estándar
+        from smtplib import SMTP
+        server = SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error enviando correo SMTP: {e}")
+        return False
+
+def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, attachment_path: str):
+    """
+    Simulates or sends an email with the PDF attached.
+    """
+    if not SMTP_SERVER or not SMTP_USERNAME:
+        print("="*60)
+        print(f"SIMULACIÓN DE CORREO (Certificdo) -> Para: {to_email}")
+        print(f"Asunto: {subject}")
+        print(f"Adjunto: {attachment_path}")
+        print("="*60)
+        return True
+        
+    msg = MIMEMultipart("mixed")
+    msg["Subject"] = subject
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = to_email
+    
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
+        <h2 style="color: #0A0A0A;">Certificado Botánico de Dárboles</h2>
+        <p style="color: #666666; font-size: 16px;">¡Hola {gift.recipient_name}!</p>
+        <p style="color: #666666; font-size: 16px;">{gift.buyer_name} te ha obsequiado la tutela directa de la especie <strong>{tree_name}</strong> a través de nuestra infraestructura tecnológica de mitigación.</p>
+        
+        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; color: #475569; font-style: italic;">"{gift.message or 'Un regalo al planeta y a ti.'}"</p>
+        </div>
+        
+        <p style="color: #666666; font-size: 16px;">Adjunto a este correo encontrarás el certificado de propiedad y mitigación expedido por Dárboles. Guárdalo, es el documento oficial de esta siembra.</p>
+        
+        <p style="color: #999999; font-size: 14px; margin-top: 40px;">Verifica la autenticidad e injerencia climática en nuestro portal de transparencia.</p>
+    </div>
+    """
+    msg.attach(MIMEText(html_content, "html"))
+    
+    # Attach PDF
+    try:
+        with open(attachment_path, "rb") as f:
+            pdf_attachment = MIMEApplication(f.read(), _subtype="pdf")
+            pdf_attachment.add_header('Content-Disposition', 'attachment', filename=f"{tree_name}_Certificado.pdf")
+            msg.attach(pdf_attachment)
+    except Exception as e:
+        print(f"Error procesando archivo adjunto: {e}")
+        return False
+
+    try:
         from smtplib import SMTP
         server = SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()

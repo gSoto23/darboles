@@ -6,6 +6,8 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.models.gift import Gift
+from datetime import datetime
 
 router = APIRouter()
 
@@ -103,6 +105,36 @@ class CartCheckoutRequest(BaseModel):
 
 @router.post("/checkout/gift")
 async def create_gift_checkout(data: CartCheckoutRequest, db: Session = Depends(get_db)):
+    # 1. Persist to DB immediately as pending
+    temp_ref = f"LOCAL-{os.urandom(4).hex()}" if data.payment_method == 'sinpe' else "CARD-PENDING"
+    
+    for item in data.gifts:
+        send_date_obj = None
+        if item.send_date:
+            try:
+                send_date_obj = datetime.strptime(item.send_date, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+                
+        new_gift = Gift(
+             buyer_name=data.buyer_name,
+             buyer_email=data.buyer_email,
+             tree_id=item.tree_id,
+             quantity=item.quantity,
+             recipient_name=item.recipient_name,
+             recipient_last_name=item.recipient_last_name,
+             recipient_email=item.recipient_email,
+             recipient_whatsapp=item.recipient_whatsapp,
+             recipient_address=item.recipient_address,
+             message=item.message,
+             send_date=send_date_obj,
+             status="pending",
+             transaction_ref=temp_ref
+        )
+        db.add(new_gift)
+    
+    db.commit()
+
     if data.payment_method == 'sinpe':
         # Simulate local success for SINPE verification
         return {"status": "pending_verification", "checkout_url": None}

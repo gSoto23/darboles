@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 from app.routers import auth, admin, payments, inventory, subscriptions, admin_users
-from app.models import user, tree, farm, subscription
+from app.models import user, tree, farm, subscription, gift
+from app.core.scheduler import start_scheduler
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # Using Alembic for database migrations instead of create_all()
 
@@ -20,6 +24,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def on_startup():
+    start_scheduler()
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])

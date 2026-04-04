@@ -24,6 +24,11 @@ export default function Footer() {
             <Link href="/transparencia" className={styles.link}>Reportes de Impacto</Link>
             <Link href="/contacto" className={styles.link}>Contacto</Link>
           </div>
+          <div className={styles.linkGroup}>
+            <span className={styles.linkTitle}>Legales</span>
+            <Link href="/privacidad" className={styles.link}>Privacidad</Link>
+            <Link href="/terminos" className={styles.link}>Términos y Condiciones</Link>
+          </div>
         </div>
       </div>
       <div className={styles.copy}>
