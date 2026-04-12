@@ -16,14 +16,11 @@ export default function Footer() {
         <div className={styles.links}>
           <div className={styles.linkGroup}>
             <span className={styles.linkTitle}>{t("footer.platform")}</span>
-            <Link href="/suscripciones" className={styles.link}>{t("footer.netzero")}</Link>
             <Link href="/regalos" className={styles.link}>{t("footer.store")}</Link>
-            <Link href="/empresas" className={styles.link}>{t("footer.b2b")}</Link>
           </div>
           <div className={styles.linkGroup}>
             <span className={styles.linkTitle}>{t("footer.company")}</span>
             <Link href="/nosotros" className={styles.link}>{t("footer.philosophy")}</Link>
-            <Link href="/transparencia" className={styles.link}>{t("footer.impact")}</Link>
             <Link href="/contacto" className={styles.link}>{t("footer.contact")}</Link>
           </div>
           <div className={styles.linkGroup}>

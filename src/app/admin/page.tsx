@@ -10,14 +10,23 @@ interface TreeSpecies {
   scientific_name: string;
   description: string;
   co2_capture_capacity_kg_per_year: number;
-  price_usd: number;
+  price_crc: number;
   image_url: string;
+  stock: number;
+  is_active: boolean;
 }
 
 interface Gift {
   id: number;
   buyer_name: string;
+  buyer_last_name?: string;
   buyer_email: string;
+  buyer_whatsapp?: string;
+  invoice_requested?: boolean;
+  invoice_name?: string;
+  invoice_id_number?: string;
+  invoice_address?: string;
+  invoice_activity_code?: string;
   tree_id: number;
   quantity: number;
   recipient_name: string;
@@ -30,37 +39,117 @@ interface Gift {
   transaction_ref?: string;
   status: string;
   certificate_url?: string;
+  shipping_cost_applied?: number;
+  payment_receipt_url?: string;
+  payment_receipt_method?: string;
   tree?: TreeSpecies;
 }
 
-interface Farm {
-  id: number;
-  name: string;
-  total_trees: number;
-  trees_sold: number;
-  carbon_capacity_tons: number;
-  gps_location: string;
-  caretaker_name: string;
-  caretaker_contact: string;
-}
-
-interface Subscription {
-  id: number;
-  customer_name: string;
-  customer_email: string;
-  quantity: number;
-  status: string;
-  farm_id: number | null;
-}
-
 import Loader from '@/components/Loader';
+import { Toaster, toast } from 'react-hot-toast';
+
+const CantonAccordion = ({ gamCantonsStr, onChange }: { gamCantonsStr: string; onChange: (s: string) => void }) => {
+  const [locations, setLocations] = useState<{ provincia: string; cantones: string[] }[]>([]);
+  const [openProv, setOpenProv] = useState<string | null>(null);
+  const [loadingLocs, setLoadingLocs] = useState(false);
+
+  const selectedCantons = useMemo(() => {
+    return new Set(gamCantonsStr.split(',').map((c) => c.trim().toLowerCase()).filter((c) => c));
+  }, [gamCantonsStr]);
+
+  const handleToggle = (provincia: string, canton: string) => {
+    const compKey = `${provincia}|${canton}`.toLowerCase();
+    const legacyKey = canton.toLowerCase();
+    const current = new Set(selectedCantons);
+    
+    if (current.has(compKey) || current.has(legacyKey)) {
+      current.delete(compKey);
+      current.delete(legacyKey);
+    } else {
+      current.add(compKey);
+    }
+    
+    const activeNames: string[] = [];
+    locations.forEach(l => l.cantones.forEach(c => {
+      const ck = `${l.provincia}|${c}`.toLowerCase();
+      const lk = c.toLowerCase();
+      if (current.has(ck) || current.has(lk)) activeNames.push(`${l.provincia}|${c}`);
+    }));
+    onChange(activeNames.join(','));
+  };
+
+  useEffect(() => {
+    const fetchLocs = async () => {
+      setLoadingLocs(true);
+      try {
+        const provRes = await fetch('https://ubicaciones.paginasweb.cr/provincias.json');
+        const provData = await provRes.json();
+        
+        const locsData: { provincia: string; cantones: string[] }[] = [];
+        for (const [id, provName] of Object.entries(provData)) {
+          const cantRes = await fetch(`https://ubicaciones.paginasweb.cr/provincia/${id}/cantones.json`);
+          const cantData = await cantRes.json();
+          locsData.push({
+            provincia: provName as string,
+            cantones: Object.values(cantData) as string[]
+          });
+        }
+        setLocations(locsData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingLocs(false);
+      }
+    };
+    fetchLocs();
+  }, []);
+
+  if (loadingLocs) return <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Cargando catálogo de cantones...</div>;
+
+  return (
+    <div style={{ border: '1px solid var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
+      {locations.map((loc) => {
+        const isOpen = openProv === loc.provincia;
+        const selectedCount = loc.cantones.filter(c => selectedCantons.has(`${loc.provincia}|${c}`.toLowerCase()) || selectedCantons.has(c.toLowerCase())).length;
+        
+        return (
+          <div key={loc.provincia} style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <div 
+              onClick={() => setOpenProv(isOpen ? null : loc.provincia)}
+              style={{ background: 'var(--color-surface)', padding: '0.75rem 1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600, fontSize: '0.9rem' }}
+            >
+              <span>{loc.provincia} <span style={{ color: 'var(--color-muted)', fontWeight: 'normal', fontSize: '0.8rem', marginLeft: '0.5rem' }}>({selectedCount} seleccionados)</span></span>
+              <span>{isOpen ? '▲' : '▼'}</span>
+            </div>
+            {isOpen && (
+              <div style={{ background: 'var(--color-background)', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
+                {loc.cantones.map((canton) => {
+                  const isChecked = selectedCantons.has(`${loc.provincia}|${canton}`.toLowerCase()) || selectedCantons.has(canton.toLowerCase());
+                  return (
+                    <label key={canton} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={isChecked} 
+                        onChange={() => handleToggle(loc.provincia, canton)} 
+                      />
+                      {canton}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'pedidos' | 'suscripciones' | 'catalogo' | 'fincas' | 'usuarios'>('pedidos');
+  const [activeTab, setActiveTab] = useState<'pedidos' | 'catalogo' | 'usuarios' | 'configuracion'>('pedidos');
+  const [storeConfig, setStoreConfig] = useState<any>(null);
   const [trees, setTrees] = useState<TreeSpecies[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
-  const [farms, setFarms] = useState<Farm[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -69,19 +158,14 @@ export default function AdminDashboard() {
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
 
-  // New Farm Modal State
-  const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
-  const [newFarm, setNewFarm] = useState({
-    name: '', total_trees: 0, carbon_capacity_tons: 0, 
-    gps_location: '', caretaker_name: '', caretaker_contact: ''
-  });
 
   // Species Modal State
   const [isSpeciesModalOpen, setIsSpeciesModalOpen] = useState(false);
   const [editingSpeciesId, setEditingSpeciesId] = useState<number | null>(null);
   const [speciesForm, setSpeciesForm] = useState({
-    name: '', scientific_name: '', price_usd: 0,
-    description: '', co2_capture_capacity_kg_per_year: 0, image_url: ''
+    name: '', scientific_name: '', price_crc: 0,
+    description: '', co2_capture_capacity_kg_per_year: 0, image_url: '',
+    stock: 0, is_active: true
   });
 
   useEffect(() => {
@@ -123,29 +207,6 @@ export default function AdminDashboard() {
     } catch(err) { console.error(err); }
   }
 
-  const fetchFarms = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const res = await fetch('http://localhost:8001/api/v1/inventory/farms', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setFarms(data);
-    } catch(err) { console.error(err); }
-  };
-
-  const fetchSubscriptions = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const res = await fetch('http://localhost:8001/api/v1/subscriptions', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setSubscriptions(data);
-    } catch(err) { console.error(err); }
-  }
 
   const fetchGifts = async () => {
     const token = localStorage.getItem('token');
@@ -172,38 +233,19 @@ export default function AdminDashboard() {
         .then(data => setTrees(data))
         .catch(err => console.error(err));
     }
-    if (activeTab === 'fincas') {
-      fetchFarms();
-    }
-    if (activeTab === 'suscripciones') {
-      fetchSubscriptions();
-      fetchFarms(); // need farms for the dropdown
-    }
+
     if (activeTab === 'usuarios' && isSuperAdmin) {
       fetchUsers();
     }
+
+    if (activeTab === 'configuracion') {
+      fetch('http://localhost:8001/api/v1/config')
+        .then(res => res.json())
+        .then(data => setStoreConfig(data))
+        .catch(err => console.error(err));
+    }
   }, [activeTab, isAdmin, isSuperAdmin]);
 
-  const handleCreateFarm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch('http://localhost:8001/api/v1/inventory/farms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newFarm)
-      });
-      if (res.ok) {
-        setIsFarmModalOpen(false);
-        fetchFarms(); // Refresh
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleOpenSpeciesModal = (species?: TreeSpecies) => {
     if (species) {
@@ -211,14 +253,16 @@ export default function AdminDashboard() {
       setSpeciesForm({
         name: species.name,
         scientific_name: species.scientific_name,
-        price_usd: species.price_usd,
+        price_crc: species.price_crc,
         description: species.description || '',
         co2_capture_capacity_kg_per_year: species.co2_capture_capacity_kg_per_year || 0,
-        image_url: species.image_url || ''
+        image_url: species.image_url || '',
+        stock: species.stock,
+        is_active: species.is_active
       });
     } else {
       setEditingSpeciesId(null);
-      setSpeciesForm({ name: '', scientific_name: '', price_usd: 0, description: '', co2_capture_capacity_kg_per_year: 0, image_url: '' });
+      setSpeciesForm({ name: '', scientific_name: '', price_crc: 0, description: '', co2_capture_capacity_kg_per_year: 0, image_url: '', stock: 0, is_active: true });
     }
     setIsSpeciesModalOpen(true);
   };
@@ -250,23 +294,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAssignFarm = async (subId: number, farmIdStr: string) => {
-    const token = localStorage.getItem('token');
-    const farmId = farmIdStr ? parseInt(farmIdStr, 10) : null;
-    try {
-      await fetch(`http://localhost:8001/api/v1/subscriptions/${subId}/assign-farm`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ farm_id: farmId })
-      });
-      fetchSubscriptions();
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
   const handleToggleAdmin = async (userId: number, currentStatus: boolean) => {
     const token = localStorage.getItem('token');
@@ -320,22 +347,16 @@ export default function AdminDashboard() {
           Pedidos
         </button>
         <button 
-          className={`${styles.navItem} ${activeTab === 'suscripciones' ? styles.active : ''}`}
-          onClick={() => setActiveTab('suscripciones')}
-        >
-          Suscripciones
-        </button>
-        <button 
           className={`${styles.navItem} ${activeTab === 'catalogo' ? styles.active : ''}`}
           onClick={() => setActiveTab('catalogo')}
         >
           Catálogo de Árboles
         </button>
         <button 
-          className={`${styles.navItem} ${activeTab === 'fincas' ? styles.active : ''}`}
-          onClick={() => setActiveTab('fincas')}
+          className={`${styles.navItem} ${activeTab === 'configuracion' ? styles.active : ''}`}
+          onClick={() => setActiveTab('configuracion')}
         >
-          Net-Zero (Fincas)
+          Configuración
         </button>
         {isSuperAdmin && (
           <button 
@@ -352,10 +373,9 @@ export default function AdminDashboard() {
           <div>
             <h1 className={styles.title}>
               {activeTab === 'pedidos' && 'Gestor de Entregas y Checkout'}
-              {activeTab === 'suscripciones' && 'Panel de Suscripciones (Calculadora)'}
               {activeTab === 'catalogo' && 'Control de Especies e Inventario'}
-              {activeTab === 'fincas' && 'Monitoreo Global de Fincas'}
               {activeTab === 'usuarios' && 'Sistema de Roles y Accesos MAESTRO'}
+              {activeTab === 'configuracion' && 'Ajustes de Tienda y Logística'}
             </h1>
             <p className={styles.subtitle}>
               Monitor central del ecosistema Dárboles.
@@ -364,9 +384,7 @@ export default function AdminDashboard() {
           {activeTab === 'catalogo' && (
             <button className={styles.addBtn} onClick={() => handleOpenSpeciesModal()}>+ Añadir Especie</button>
           )}
-          {activeTab === 'fincas' && (
-            <button className={styles.addBtn} onClick={() => setIsFarmModalOpen(true)}>+ Añadir Finca</button>
-          )}
+
         </header>
 
         {activeTab === 'pedidos' && (
@@ -379,9 +397,16 @@ export default function AdminDashboard() {
                 { key: 'tree', label: 'Árbol Solicitado', render: (row: any) => row.tree ? `${row.quantity}x ${row.tree.name}` : `${row.quantity}x Especie ID: ${row.tree_id}` },
                 { key: 'ref', label: 'Referencia Bancaria', render: (row: any) => <span style={{ color: 'var(--color-muted)' }}>{row.transaction_ref || 'N/A'}</span> },
                 { key: 'status', label: 'Estado', render: (row: any) => (
-                  <span className={`${styles.statusBadge} ${row.status === 'verified' || row.status === 'delivered' || row.status === 'sent' ? styles.statusSuccess : styles.statusPending}`}>
-                    {row.status === 'verified' ? 'Verificado' : row.status === 'delivered' ? 'Entregado' : row.status === 'sent' ? 'Enviado' : row.status === 'pending' ? 'Pendiente' : row.status}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-start' }}>
+                    <span className={`${styles.statusBadge} ${row.status === 'paid' || row.status === 'delivered' || row.status === 'shipped' ? styles.statusSuccess : styles.statusPending}`}>
+                      {row.status === 'paid' ? 'Pago' : row.status === 'delivered' ? 'Entregado' : row.status === 'shipped' ? 'En ruta' : row.status === 'pending' ? 'Revisión de pago' : row.status}
+                    </span>
+                    {row.payment_receipt_method === 'upload' && row.payment_receipt_url && (
+                        <a href={`http://localhost:8001/api/${row.payment_receipt_url}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: '#3b82f6', textDecoration: 'underline' }}>
+                          Ver Comprobante
+                        </a>
+                    )}
+                  </div>
                 ) },
                 { key: 'actions', label: 'Acciones', render: (row: any) => (
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -390,18 +415,25 @@ export default function AdminDashboard() {
                         style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', cursor: 'pointer', background: 'transparent', fontSize: '0.8rem' }}
                       >Detalle</button>
                       
-                      {row.status === 'pending' && row.transaction_ref?.startsWith('LOCAL-') && (
+                      {row.status === 'pending' && (
                         <button 
-                          onClick={() => handleUpdateGiftStatus(row.id, 'verified')}
+                          onClick={() => handleUpdateGiftStatus(row.id, 'paid')}
                           style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: 'none', background: '#22c55e', color: 'white', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
                         >Validar SINPE</button>
                       )}
                       
-                      {(row.status === 'verified' || row.status === 'sent') && (
+                      {row.status === 'paid' && (
+                        <button 
+                          onClick={() => handleUpdateGiftStatus(row.id, 'shipped')}
+                          style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: 'none', background: '#eab308', color: 'var(--color-background)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                        >Enviar</button>
+                      )}
+
+                      {row.status === 'shipped' && (
                         <button 
                           onClick={() => handleUpdateGiftStatus(row.id, 'delivered')}
                           style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: 'none', background: '#3b82f6', color: 'white', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
-                        >Marcar Entregado</button>
+                        >Entregado</button>
                       )}
                     </div>
                 )}
@@ -410,29 +442,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'suscripciones' && (
-          <div className="slide-up">
-            <SmartTable 
-              data={subscriptions} 
-              columns={[
-                { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
-                { key: 'customer_name', label: 'Cliente Net-Zero', render: (row: any) => <><span style={{ fontWeight: 500 }}>{row.customer_name}</span><div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{row.customer_email}</div></> },
-                { key: 'quantity', label: 'Árboles' },
-                { key: 'status', label: 'Estado', render: (row: any) => <span className={`${styles.statusBadge} ${row.status === 'active' ? styles.statusSuccess : styles.statusPending}`}>{row.status}</span> },
-                { key: 'farm_id', label: 'Asignación de Finca', render: (row: any) => (
-                  <select 
-                    value={row.farm_id || ''} 
-                    onChange={(e) => handleAssignFarm(row.id, e.target.value)}
-                    style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-foreground)', fontSize: '0.85rem', maxWidth: '200px', width: '100%', textOverflow: 'ellipsis' }}
-                  >
-                    <option value="">Finca NO Asignada</option>
-                    {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                  </select>
-                )}
-              ]} 
-            />
-          </div>
-        )}
 
         {activeTab === 'catalogo' && (
           <div className="slide-up">
@@ -442,28 +451,15 @@ export default function AdminDashboard() {
                 { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
                 { key: 'name', label: 'Nombre Común', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.name}</span> },
                 { key: 'scientific_name', label: 'Nombre Científico', render: (row: any) => <span style={{ fontStyle: 'italic', color: 'var(--color-muted)' }}>{row.scientific_name}</span> },
-                { key: 'price_usd', label: 'Precio', render: (row: any) => `$${row.price_usd.toFixed(2)}` },
+                { key: 'price_crc', label: 'Precio', render: (row: any) => `₡${row.price_crc.toLocaleString()}` },
+                { key: 'stock', label: 'Inventario', render: (row: any) => <span style={{ fontWeight: 600, color: row.stock > 0 ? 'var(--color-foreground)' : 'var(--color-accent)' }}>{row.stock} uds</span> },
+                { key: 'is_active', label: 'Estado', render: (row: any) => <span style={{ color: row.is_active ? '#22c55e' : 'var(--color-muted)' }}>{row.is_active ? 'Activo' : 'Inactivo'}</span> },
                 { key: 'actions', label: 'Acciones', render: (row: any) => <button onClick={() => handleOpenSpeciesModal(row)} style={{ background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', textDecoration: 'underline' }}>Editar</button> }
               ]} 
             />
           </div>
         )}
 
-        {activeTab === 'fincas' && (
-          <div className="slide-up">
-            <SmartTable 
-              data={farms} 
-              columns={[
-                { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
-                { key: 'name', label: 'Nombre Operativo', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.name}</span> },
-                { key: 'gps_location', label: 'Coordenadas GPS', render: (row: any) => <a href={`https://www.google.com/maps?q=${row.gps_location}`} target="_blank" rel="noopener noreferrer" style={{ fontStyle: 'italic', color: 'var(--color-accent)', textDecoration: 'underline' }}>{row.gps_location}</a> },
-                { key: 'total_trees', label: 'Árboles (Meta)', render: (row: any) => <><span style={{ fontWeight: 600 }}>{row.total_trees.toLocaleString()}</span> totales / <span style={{ color: 'var(--color-accent)'}}>{row.trees_sold.toLocaleString()}</span> vendidos</> },
-                { key: 'carbon_capacity_tons', label: 'Capacidad de CO₂', render: (row: any) => `${row.carbon_capacity_tons.toLocaleString()} Toneladas` },
-                { key: 'caretaker_name', label: 'Cuidador', render: (row: any) => `${row.caretaker_name} (${row.caretaker_contact})` }
-              ]} 
-            />
-          </div>
-        )}
 
         {activeTab === 'usuarios' && isSuperAdmin && (
           <div className="slide-up">
@@ -495,60 +491,73 @@ export default function AdminDashboard() {
             />
           </div>
         )}
-      </main>
-
-      {/* --- ADD FARM MODAL --- */}
-      {isFarmModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '500px', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Añadir Nueva Finca</h2>
-              <button 
-                onClick={() => setIsFarmModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-muted)' }}
-              >×</button>
-            </div>
-            
-            <form onSubmit={handleCreateFarm} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {activeTab === 'configuracion' && storeConfig && (
+          <div className="slide-up" style={{ maxWidth: '800px', background: 'var(--color-surface)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const token = localStorage.getItem('token');
+              try {
+                const res = await fetch('http://localhost:8001/api/v1/admin/config', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                  body: JSON.stringify(storeConfig)
+                });
+                if (res.ok) {
+                  toast.success('Configuración guardada exitosamente.');
+                } else {
+                  toast.error('Error al guardar configuración');
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error('Hubo un problema de conexión.');
+              }
+            }}>
               
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Nombre Operativo</label>
-                <input required type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={newFarm.name} onChange={(e) => setNewFarm({...newFarm, name: e.target.value})} placeholder="Ej. Reserva Dárboles Guanacaste" />
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Capacidad de Árboles Plantados</label>
-                  <input required type="number" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={newFarm.total_trees} onChange={(e) => setNewFarm({...newFarm, total_trees: parseInt(e.target.value, 10)})} />
+              <h3 style={{ marginBottom: '1.5rem', color: 'var(--color-foreground)' }}>Tarifas y Tiempos de Envío</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Costo Envío GAM (Colones)</label>
+                  <input type="number" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.gam_shipping_cost} onChange={(e) => setStoreConfig({...storeConfig, gam_shipping_cost: parseFloat(e.target.value)})} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Toneladas de CO₂ Auditadas</label>
-                  <input required type="number" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={newFarm.carbon_capacity_tons} onChange={(e) => setNewFarm({...newFarm, carbon_capacity_tons: parseInt(e.target.value, 10)})} />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Tiempo Entrega GAM</label>
+                  <input type="text" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.gam_delivery_days} onChange={(e) => setStoreConfig({...storeConfig, gam_delivery_days: e.target.value})} />
                 </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Coordenadas GPS (Lat, Lng)</label>
-                <input required type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={newFarm.gps_location} onChange={(e) => setNewFarm({...newFarm, gps_location: e.target.value})} placeholder="Ej. 10.612, -85.431" />
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Nombre Guardabosques</label>
-                  <input required type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={newFarm.caretaker_name} onChange={(e) => setNewFarm({...newFarm, caretaker_name: e.target.value})} />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Costo Envío Fuera GAM (Colones)</label>
+                  <input type="number" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.non_gam_shipping_cost} onChange={(e) => setStoreConfig({...storeConfig, non_gam_shipping_cost: parseFloat(e.target.value)})} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Teléfono</label>
-                  <input required type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={newFarm.caretaker_contact} onChange={(e) => setNewFarm({...newFarm, caretaker_contact: e.target.value})} />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Tiempo Entrega Fuera GAM</label>
+                  <input type="text" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.non_gam_delivery_days} onChange={(e) => setStoreConfig({...storeConfig, non_gam_delivery_days: e.target.value})} />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Lista de Cantones dentro del GAM</label>
+                  <CantonAccordion 
+                    gamCantonsStr={storeConfig.gam_cantons || ''} 
+                    onChange={(newVal) => setStoreConfig({...storeConfig, gam_cantons: newVal})} 
+                  />
                 </div>
               </div>
 
-              <button type="submit" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer' }}>Guardar e Inicializar Finca</button>
+              <h3 style={{ marginBottom: '1.5rem', color: 'var(--color-foreground)', borderTop: '1px solid var(--color-border)', paddingTop: '2rem' }}>Información de Pago (SINPE)</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Número SINPE Móvil</label>
+                  <input type="text" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.sinpe_number} onChange={(e) => setStoreConfig({...storeConfig, sinpe_number: e.target.value})} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Nombre Asociado a Cuenta</label>
+                  <input type="text" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.sinpe_name} onChange={(e) => setStoreConfig({...storeConfig, sinpe_name: e.target.value})} />
+                </div>
+              </div>
 
+              <button type="submit" style={{ padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer', display: 'block', width: '100%' }}>Guardar Configuración</button>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </main>
+
 
       {/* --- ADD/EDIT SPECIES MODAL --- */}
       {isSpeciesModalOpen && (
@@ -585,14 +594,25 @@ export default function AdminDashboard() {
                   <input required type="number" step="0.1" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={speciesForm.co2_capture_capacity_kg_per_year} onChange={(e) => setSpeciesForm({...speciesForm, co2_capture_capacity_kg_per_year: parseFloat(e.target.value)})} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Precio (USD)</label>
-                  <input required type="number" step="0.01" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={speciesForm.price_usd} onChange={(e) => setSpeciesForm({...speciesForm, price_usd: parseFloat(e.target.value)})} />
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Precio (CRC)</label>
+                  <input required type="number" step="1" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={speciesForm.price_crc} onChange={(e) => setSpeciesForm({...speciesForm, price_crc: parseInt(e.target.value)})} />
                 </div>
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>URL Fotografía Alta Resolución</label>
                 <input required type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={speciesForm.image_url} onChange={(e) => setSpeciesForm({...speciesForm, image_url: e.target.value})} placeholder="https://..." />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Stock Disponible</label>
+                  <input required type="number" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={speciesForm.stock} onChange={(e) => setSpeciesForm({...speciesForm, stock: parseInt(e.target.value) || 0})} />
+                </div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                  <input type="checkbox" id="is_active" checked={speciesForm.is_active} onChange={(e) => setSpeciesForm({...speciesForm, is_active: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                  <label htmlFor="is_active" style={{ fontSize: '0.9rem', color: 'var(--color-foreground)', cursor: 'pointer' }}>Especie Pública y Activa</label>
+                </div>
               </div>
 
               <button type="submit" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer' }}>Guardar Especie</button>
@@ -621,8 +641,22 @@ export default function AdminDashboard() {
               
               <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-surface)' }}>
                 <h3 style={{ fontSize: '0.9rem', color: 'var(--color-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Datos del Comprador</h3>
-                <p style={{ margin: '0.2rem 0', fontWeight: 500 }}>{selectedGift.buyer_name}</p>
-                <p style={{ margin: '0.2rem 0', color: 'var(--color-muted)', fontSize: '0.9rem' }}>{selectedGift.buyer_email}</p>
+                <p style={{ margin: '0.2rem 0', fontWeight: 500 }}>{selectedGift.buyer_name} {selectedGift.buyer_last_name || ''}</p>
+                <p style={{ margin: '0.2rem 0', color: 'var(--color-muted)', fontSize: '0.9rem' }}>Email: {selectedGift.buyer_email}</p>
+                {selectedGift.buyer_whatsapp && (
+                  <p style={{ margin: '0.2rem 0', color: 'var(--color-muted)', fontSize: '0.9rem' }}>WhatsApp: {selectedGift.buyer_whatsapp}</p>
+                )}
+                {selectedGift.invoice_requested && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', borderRadius: '6px', fontSize: '0.85rem' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>🎫 Requiere Factura Electrónica</strong>
+                    <div style={{ paddingLeft: '1.2rem', opacity: 0.9 }}>
+                      Razon Social/Nombre: {selectedGift.invoice_name}<br/>
+                      Cédula: {selectedGift.invoice_id_number}<br/>
+                      Dirección: {selectedGift.invoice_address}<br/>
+                      Cod. Actividad: {selectedGift.invoice_activity_code}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-surface)' }}>
@@ -651,9 +685,23 @@ export default function AdminDashboard() {
                 {selectedGift.send_date && (
                   <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}>Fecha Solicitada: {selectedGift.send_date}</p>
                 )}
+                {selectedGift.shipping_cost_applied !== undefined && selectedGift.shipping_cost_applied > 0 && (
+                  <p style={{ margin: '0.2rem 0', fontSize: '0.9rem', color: 'var(--color-muted)' }}>Envío Cobrado: ${selectedGift.shipping_cost_applied}</p>
+                )}
                 {selectedGift.message && (
                   <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: 'rgba(0,0,0,0.03)', borderRadius: '4px', fontStyle: 'italic', fontSize: '0.9rem' }}>
                     "{selectedGift.message}"
+                  </div>
+                )}
+                {selectedGift.payment_receipt_url && (
+                  <div style={{ marginTop: '0.8rem', padding: '0.8rem', border: '1px dashed #3b82f6', borderRadius: '4px' }}>
+                    <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>Comprobante SINPE Adjunto</h4>
+                    <a href={`http://localhost:8001${selectedGift.payment_receipt_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline', fontSize: '0.9rem', fontWeight: 600 }}>Ver Imagen</a>
+                  </div>
+                )}
+                {selectedGift.payment_receipt_method === 'whatsapp' && (
+                  <div style={{ marginTop: '0.8rem', color: '#166534', background: '#f0fdf4', padding: '0.5rem', borderRadius: '4px', border: '1px solid #bbf7d0', fontSize: '0.85rem', fontWeight: 600 }}>
+                    ✓ Cliente indicó que envió el comprobante por WhatsApp
                   </div>
                 )}
               </div>

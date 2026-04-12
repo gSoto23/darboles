@@ -20,7 +20,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import Base, SQLALCHEMY_DATABASE_URL
-from app.models import user, tree, farm, subscription
+from app.models import user, tree, gift, config as models_config
 
 target_metadata = Base.metadata
 

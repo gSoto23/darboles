@@ -69,7 +69,7 @@ def seed():
                 scientific_name="Tabebuia ochracea",
                 description="Árbol espectacular que florea en época seca.",
                 co2_capture_capacity_kg_per_year=22.5,
-                price_usd=25.0,
+                price_crc=12875,
                 image_url="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=600"
             )
             db.add(tree1)

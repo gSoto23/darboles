@@ -14,7 +14,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "Darboles | Reconexión Ambiental",
-  description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un legado.",
+  description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un árbol.",
 };
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";

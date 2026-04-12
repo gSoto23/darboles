@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Float
+from sqlalchemy import Column, Integer, String, Text, Float, Boolean
 from app.core.database import Base
 
 class TreeSpecies(Base):
@@ -9,5 +9,7 @@ class TreeSpecies(Base):
     scientific_name = Column(String, nullable=False)
     description = Column(Text)
     co2_capture_capacity_kg_per_year = Column(Float)
-    price_usd = Column(Float, nullable=False)
+    price_crc = Column(Integer, nullable=False)
     image_url = Column(String)
+    stock = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)

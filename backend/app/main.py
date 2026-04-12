@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.routers import auth, admin, payments, inventory, subscriptions, admin_users
-from app.models import user, tree, farm, subscription, gift
-from app.core.scheduler import start_scheduler
+from app.routers import auth, admin, payments, inventory, admin_users, config
+from app.models import user, tree, gift, config as config_model
+# from app.core.scheduler import start_scheduler
+from fastapi.staticfiles import StaticFiles
+import os
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -27,14 +29,17 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    start_scheduler()
+    pass
+
+os.makedirs("uploads", exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["Payments"])
 app.include_router(inventory.router, prefix="/api/v1", tags=["Inventory"])
-app.include_router(subscriptions.router, prefix="/api/v1", tags=["Subscriptions"])
 app.include_router(admin_users.router, prefix="/api/v1", tags=["Admin Users"])
+app.include_router(config.router)
 
 @app.get("/")
 def read_root():

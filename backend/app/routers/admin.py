@@ -56,20 +56,29 @@ def update_gift_status(gift_id: int, status_update: GiftStatusUpdate, db: Sessio
     db.commit()
     db.refresh(db_gift)
     
-    # Enviar notificaciones por correo electrónico basadas en el nuevo estado
+    # Enviar notificaciones o generar certificados basados en el nuevo estado
     tree_name = db_gift.tree.name if db_gift.tree else "Árbol"
-    if status_update.status == "verified":
+    if status_update.status == "paid":
         send_order_verified_email(
             to_email=db_gift.buyer_email,
             buyer_name=db_gift.buyer_name,
             order_id=str(db_gift.id)
         )
     elif status_update.status == "delivered":
-        send_order_delivered_email(
+        from app.services.pdf_generator import generate_gift_certificate
+        from app.core.mailer import send_certificate_email
+
+        pdf_path = generate_gift_certificate(db_gift, db_gift.tree)
+        db_gift.certificate_url = pdf_path
+        db.commit()
+
+        # Send to Recipient
+        send_certificate_email(
             to_email=db_gift.recipient_email,
-            recipient_name=db_gift.recipient_name,
+            subject=f"Tu regalo botánico de {db_gift.buyer_name} ha llegado",
+            gift=db_gift,
             tree_name=tree_name,
-            order_id=str(db_gift.id)
+            attachment_path=pdf_path
         )
 
     return db_gift

@@ -78,8 +78,6 @@ export default function Navbar() {
         {/* Desktop Links & Mobile Dropdown */}
         <div className={`${styles.links} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
           <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>{t("navbar.store")}</Link>
-          <Link href="/suscripciones" className={styles.link} onClick={handleLinkClick}>{t("navbar.netzero")}</Link>
-          <Link href="/transparencia" className={styles.link} onClick={handleLinkClick}>{t("navbar.transparency")}</Link>
 
           <button 
             onClick={() => {
@@ -93,14 +91,12 @@ export default function Navbar() {
               cursor: 'pointer', 
               fontWeight: 400, 
               fontSize: '0.85rem',
-              marginLeft: '0.5rem',
-              transition: 'color 0.2s ease',
-              opacity: 0.8
+              marginLeft: '0.5rem'
             }}
-            onMouseOver={(e) => e.currentTarget.style.color = 'var(--color-foreground)'}
-            onMouseOut={(e) => e.currentTarget.style.color = 'var(--color-muted-light)'}
           >
-            {t("navbar.langToggle")}
+            <span style={{ fontWeight: locale === 'es' ? 700 : 400 }}>ES</span>
+            {' | '}
+            <span style={{ fontWeight: locale === 'en' ? 700 : 400 }}>EN</span>
           </button>
 
           {sessionUser ? (

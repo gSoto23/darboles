@@ -13,13 +13,15 @@ interface SmartTableProps<T> {
   columns: ColumnDef<T>[];
   pageSize?: number;
   emptyMessage?: string;
+  onRowClick?: (row: T) => void;
 }
 
 export default function SmartTable<T extends Record<string, any>>({ 
   data, 
   columns, 
   pageSize = 5,
-  emptyMessage = "No hay datos disponibles" 
+  emptyMessage = "No hay datos disponibles",
+  onRowClick
 }: SmartTableProps<T>) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -117,7 +119,7 @@ export default function SmartTable<T extends Record<string, any>>({
           <tbody>
             {currentData.length > 0 ? (
               currentData.map((row, rowIdx) => (
-                <tr key={rowIdx} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background 0.2s' }}>
+                <tr key={rowIdx} onClick={() => onRowClick && onRowClick(row)} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background 0.2s', cursor: onRowClick ? 'pointer' : 'default' }}>
                   {columns.map((col, colIdx) => (
                     <td key={String(col.key)} style={{ padding: '1.2rem 1rem', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                       {col.render ? col.render(row) : row[col.key]}

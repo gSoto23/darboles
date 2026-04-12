@@ -6,8 +6,10 @@ class TreeSpeciesBase(BaseModel):
     scientific_name: str
     description: Optional[str] = None
     co2_capture_capacity_kg_per_year: Optional[float] = None
-    price_usd: float
+    price_crc: int
     image_url: Optional[str] = None
+    stock: int = 0
+    is_active: bool = True
 
 class TreeSpeciesCreate(TreeSpeciesBase):
     pass
@@ -17,8 +19,10 @@ class TreeSpeciesUpdate(BaseModel):
     scientific_name: Optional[str] = None
     description: Optional[str] = None
     co2_capture_capacity_kg_per_year: Optional[float] = None
-    price_usd: Optional[float] = None
+    price_crc: Optional[int] = None
     image_url: Optional[str] = None
+    stock: Optional[int] = None
+    is_active: Optional[bool] = None
 
 class TreeSpeciesResponse(TreeSpeciesBase):
     id: int

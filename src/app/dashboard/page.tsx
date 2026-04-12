@@ -1,37 +1,33 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from '../page.module.css';
 import SmartTable from '@/components/SmartTable';
 import toast from 'react-hot-toast';
 import Loader from '@/components/Loader';
 import { useTranslations } from '@/context/TranslationContext';
 
-interface InvoiceData {
+interface GiftData {
   id: number;
-  amount_usd: number;
-  status: string;
-  invoice_date: string;
-}
-
-interface SubscriptionData {
-  id: number;
-  customer_name: string;
-  customer_email: string;
   quantity: number;
-  amount_usd: number;
   status: string;
-  farm_id: number | null;
-  invoices?: InvoiceData[];
+  transaction_ref: string;
+  send_date: string | null;
+  tree: {
+    name: string;
+  } | null;
 }
 
 export default function DashboardPage() {
   const { t } = useTranslations();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [user, setUser] = useState<{ full_name: string, email: string, whatsapp?: string, address?: string } | null>(null);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
+  const [gifts, setGifts] = useState<GiftData[]>([]);
+  const [selectedGift, setSelectedGift] = useState<any>(null);
 
   // Profile modal state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -42,7 +38,6 @@ export default function DashboardPage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
-  const [viewInvoiceSub, setViewInvoiceSub] = useState<SubscriptionData | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,6 +47,10 @@ export default function DashboardPage() {
     if (!token) {
       router.push('/login');
       return;
+    }
+    
+    if (searchParams?.get('payment_success') === 'true') {
+      setShowSuccessModal(true);
     }
 
     const fetchData = async () => {
@@ -71,12 +70,12 @@ export default function DashboardPage() {
           router.push('/login');
         }
 
-        const subsRes = await fetch('http://localhost:8001/api/v1/subscriptions/me', {
+        const giftsRes = await fetch('http://localhost:8001/api/v1/inventory/me/gifts', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (subsRes.ok) {
-          const subs = await subsRes.json();
-          setSubscriptions(subs);
+        if (giftsRes.ok) {
+          const g = await giftsRes.json();
+          setGifts(g);
         }
       } catch (e) {
         console.error(e);
@@ -88,9 +87,6 @@ export default function DashboardPage() {
   }, [router]);
 
   if (!mounted || isLoading) return <Loader />;
-
-  const totalTrees = subscriptions.reduce((acc, sub) => acc + sub.quantity, 0);
-  const totalKgPerYear = totalTrees * 25;
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,45 +145,21 @@ export default function DashboardPage() {
     }
   };
 
-  const handleCancelSubscription = async (subId: number) => {
-    if (!confirm('¿Estás seguro de cancelar esta suscripción de árboles?')) return;
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`http://localhost:8001/api/v1/subscriptions/${subId}/cancel`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        setSubscriptions(subs => subs.map(s => s.id === subId ? { ...s, status: 'cancelled' } : s));
-        setViewInvoiceSub(null);
-        toast.success("Tu suscripción ha sido cancelada.");
-      } else {
-        toast.error("Error al cancelar la suscripción");
-      }
-    } catch (err) {
-      toast.error("Ocurrió un error en la plataforma");
-      console.error(err);
-    }
-  };
+
 
   const tableColumns = [
     { key: 'id', label: 'ID', render: (row: any) => <strong>#{row.id}</strong> },
-    { key: 'quantity', label: t("dash.forest.trees"), render: (row: any) => `🌳 ${row.quantity}` },
-    { key: 'amount_usd', label: '$ USD', render: (row: any) => <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>${row.amount_usd?.toFixed(2) || '0.00'} USD</span> },
+    { key: 'tree', label: 'Especie', render: (row: any) => <span style={{ fontWeight: 600 }}>{row.tree?.name || 'Árbol'}</span> },
+    { key: 'quantity', label: 'Cantidad', render: (row: any) => `🌳 ${row.quantity}` },
     {
       key: 'status', label: 'STS', render: (row: any) => (
         <span style={{
           padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '1rem',
-          background: row.status === 'active' ? 'var(--color-accent)' : 'var(--color-border)',
-          color: row.status === 'active' ? 'white' : 'var(--color-foreground)'
+          background: row.status === 'delivered' ? '#3b82f6' : row.status === 'paid' ? 'var(--color-accent)' : row.status === 'shipped' ? '#eab308' : 'var(--color-border)',
+          color: (row.status === 'delivered' || row.status === 'paid') ? 'white' : 'var(--color-foreground)'
         }}>
-          {row.status.toUpperCase()}
+          {row.status === 'pending' ? 'Verificando' : row.status === 'paid' ? 'Confirmado' : row.status === 'shipped' ? 'Enviado' : row.status === 'delivered' ? 'Entregado' : row.status}
         </span>
-      )
-    },
-    {
-      key: 'actions', label: '👀', render: (row: any) => (
-        <button onClick={() => setViewInvoiceSub(row)} style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'transparent', cursor: 'pointer', fontSize: '0.8rem' }}>...</button>
       )
     }
   ];
@@ -210,36 +182,11 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className={styles.dashboardGrid}>
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', padding: '3rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--color-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t("dash.forest.title")}</h3>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
-              <div style={{ fontSize: '5rem', fontWeight: 800, color: 'var(--color-foreground)', lineHeight: 1, letterSpacing: '-0.02em' }}>{String(totalTrees)}</div>
-              <div style={{ fontSize: '1.1rem', color: 'var(--color-muted)', fontWeight: 500, paddingBottom: '0.5rem' }}>{t("dash.forest.trees")}</div>
-            </div>
-            <p style={{ color: 'var(--color-muted)', marginTop: '2rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              {t("dash.forest.desc")}
-            </p>
-            {totalTrees === 0 && (
-              <button onClick={() => router.push('/suscripciones')} className={`${styles.btnAction}`} style={{ marginTop: '2rem', padding: '1rem 2rem', background: 'var(--color-accent)', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{t("dash.forest.btn")}</button>
-            )}
-          </div>
 
-          <div style={{ background: 'var(--color-foreground)', color: 'var(--color-background)', padding: '3rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t("dash.mitig.title")}</h3>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
-              <div style={{ fontSize: '5rem', fontWeight: 800, color: 'white', lineHeight: 1, letterSpacing: '-0.02em' }}>{String(totalKgPerYear)}</div>
-              <div style={{ fontSize: '1.1rem', color: 'white', opacity: 0.8, fontWeight: 500, paddingBottom: '0.5rem' }}>{t("dash.mitig.unit")}</div>
-            </div>
-            <p style={{ color: 'rgba(255,255,255,0.7)', marginTop: '2rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              {t("dash.mitig.desc")}
-            </p>
-          </div>
-        </div>
 
         <div style={{ marginTop: '4rem' }}>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-foreground)', fontWeight: 600 }}>{t("dash.hist.title")}</h3>
-          <SmartTable data={subscriptions} columns={tableColumns} />
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-foreground)', fontWeight: 600 }}>Tus Compras / Regalos</h3>
+          <SmartTable data={gifts} columns={tableColumns} onRowClick={(row) => setSelectedGift(row)} />
         </div>
       </main>
 
@@ -293,57 +240,62 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* --- INVOICE MODAL --- */}
-      {viewInvoiceSub && (
+
+
+      {/* --- SUCCESS MODAL --- */}
+      {showSuccessModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+          <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '500px', padding: '3rem 2rem', textAlign: 'center' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-accent)', color: 'var(--color-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 1.5rem auto' }}>✓</div>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: 600 }}>¡Pedido Registrado con Éxito!</h3>
+            <p style={{ color: 'var(--color-muted)', marginBottom: '2rem', lineHeight: 1.6 }}>
+              {t("regalos.checkout.successBody")}
+            </p>
+            <button onClick={() => { setShowSuccessModal(false); router.replace('/dashboard'); }} style={{ padding: '0.75rem 2rem', borderRadius: '2rem', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer', maxWidth: '200px', margin: '0 auto' }}>
+              Volver al Panel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- GIFT DETAIL MODAL --- */}
+      {selectedGift && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '600px', padding: '2rem' }}>
+          <div style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '1rem', width: '100%', maxWidth: '500px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t("dash.inv.title")}{viewInvoiceSub.id})</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Detalle de Pedido #{selectedGift.id}</h2>
               <button
-                onClick={() => setViewInvoiceSub(null)}
+                onClick={() => setSelectedGift(null)}
                 style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-muted)' }}
               >×</button>
             </div>
+            
+            <div style={{ marginBottom: '1.5rem', background: 'var(--color-surface)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Especie Regalada</div>
+              <p>{selectedGift.quantity}x {selectedGift.tree?.name || 'Árbol'} <span style={{ opacity: 0.6, fontStyle: 'italic', fontSize: '0.8rem' }}>({selectedGift.tree?.scientific_name})</span></p>
+            </div>
 
-            <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.5rem', overflow: 'hidden', marginBottom: '1.5rem' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ background: 'var(--color-background)', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '0.8rem 1rem', fontSize: '0.75rem', color: 'var(--color-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t("dash.inv.col1")}</th>
-                    <th style={{ padding: '0.8rem 1rem', fontSize: '0.75rem', color: 'var(--color-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t("dash.inv.col2")}</th>
-                    <th style={{ padding: '0.8rem 1rem', fontSize: '0.75rem', color: 'var(--color-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{t("dash.inv.col3")}</th>
-                  </tr>
-                </thead>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Información del Destinatario</div>
+              <table style={{ width: '100%', fontSize: '0.9rem', color: 'var(--color-foreground)' }}>
                 <tbody>
-                  {viewInvoiceSub.invoices && viewInvoiceSub.invoices.length > 0 ? viewInvoiceSub.invoices.map(inv => (
-                    <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '0.8rem 1rem', fontSize: '0.85rem' }}>{inv.invoice_date}</td>
-                      <td style={{ padding: '0.8rem 1rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-foreground)' }}>${inv.amount_usd.toFixed(2)} USD</td>
-                      <td style={{ padding: '0.8rem 1rem' }}>
-                        <span style={{ padding: '0.2rem 0.5rem', background: inv.status === 'paid' ? 'var(--color-accent)' : 'var(--color-border)', color: inv.status === 'paid' ? 'white' : 'var(--color-foreground)', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: 600 }}>{inv.status.toUpperCase()}</span>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={3} style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--color-muted)' }}>{t("dash.inv.empty")}</td>
-                    </tr>
+                  <tr><td style={{ color: 'var(--color-muted)', paddingBottom: '0.25rem', width: '100px' }}>Nombre:</td><td>{selectedGift.recipient_name} {selectedGift.recipient_last_name}</td></tr>
+                  <tr><td style={{ color: 'var(--color-muted)', paddingBottom: '0.25rem' }}>Email:</td><td>{selectedGift.recipient_email}</td></tr>
+                  <tr><td style={{ color: 'var(--color-muted)', paddingBottom: '0.25rem' }}>WhatsApp:</td><td>{selectedGift.recipient_whatsapp}</td></tr>
+                  {selectedGift.message && (
+                    <tr><td style={{ color: 'var(--color-muted)', verticalAlign: 'top', paddingTop: '0.5rem' }}>Mensaje:</td><td style={{ paddingTop: '0.5rem', fontStyle: 'italic' }}>"{selectedGift.message}"</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
 
-            {viewInvoiceSub.status === 'active' && (
-              <button
-                onClick={() => handleCancelSubscription(viewInvoiceSub.id)}
-                style={{ width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
-              >
-                {t("dash.inv.cancel")}
-              </button>
+            {selectedGift.status === 'delivered' && selectedGift.certificate_url && (
+              <div style={{ marginTop: '2rem', textAlign: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+                <a href={`http://localhost:8001/api/${selectedGift.certificate_url}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', padding: '0.75rem 2rem', background: '#3b82f6', color: 'white', fontWeight: 600, borderRadius: '2rem', textDecoration: 'none' }}>
+                  Ver Certificado PDF
+                </a>
+              </div>
             )}
-            {viewInvoiceSub.status === 'cancelled' && (
-              <div style={{ textAlign: 'center', color: '#ef4444', fontWeight: 600, padding: '1rem' }}>{t("dash.inv.cancelled")}</div>
-            )}
-
           </div>
         </div>
       )}
