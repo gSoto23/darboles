@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 from app.schemas.tree import TreeSpeciesResponse
 
 class GiftBase(BaseModel):
@@ -18,6 +18,7 @@ class GiftBase(BaseModel):
     transaction_ref: Optional[str] = None
     status: Optional[str] = "pending"
     certificate_url: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 class GiftRead(GiftBase):
     id: int

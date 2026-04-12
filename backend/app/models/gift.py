@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from app.core.database import Base
 
 class Gift(Base):
@@ -35,5 +36,6 @@ class Gift(Base):
     shipping_cost_applied = Column(Float, nullable=True, default=0.0)
     payment_receipt_url = Column(String, nullable=True)
     payment_receipt_method = Column(String, nullable=True) # "upload", "whatsapp"
+    created_at = Column(DateTime, default=datetime.utcnow)
     
     tree = relationship("TreeSpecies")

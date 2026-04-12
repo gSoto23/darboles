@@ -3,6 +3,18 @@ from smtplib import SMTP_SSL, SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
+import base64
+
+def get_logo_html():
+    logo_path = os.path.join(os.path.dirname(__file__), "../../../public/logo.png")
+    if os.path.exists(logo_path):
+        try:
+            with open(logo_path, "rb") as f:
+                img_b64 = base64.b64encode(f.read()).decode()
+                return f'<div style="text-align: center; margin-bottom: 30px;"><img src="data:image/png;base64,{img_b64}" alt="Dárboles" style="height: 35px;" /></div>'
+        except Exception:
+            pass
+    return '<div style="text-align: center; margin-bottom: 30px;"><h1 style="color: #0A0A0A; letter-spacing: -1px; font-size: 28px; font-weight: 800; margin: 0;">Dárboles</h1></div>'
 
 # Configuraciones de Entorno
 SMTP_SERVER = os.getenv("SMTP_SERVER", "")
@@ -33,7 +45,8 @@ def send_reset_password_email(to_email: str, token: str):
 
     text = f"Hola,\n\nHaz clic en el siguiente enlace de un solo uso para establecer tu nueva contraseña en Dárboles. Este enlace expira en 15 minutos.\n\n{reset_link}\n\nSi no fuiste tú, ignora este mensaje."
     html_content = f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        {get_logo_html()}
         <h2 style="color: #0A0A0A; letter-spacing: -0.02em; font-size: 24px;">Restablecer Contraseña</h2>
         <p style="color: #666666; font-size: 16px; line-height: 1.6;">Hemos recibido una solicitud para cambiar tu contraseña en Dárboles. Haz clic en el botón de abajo para continuar. El enlace es válido por 15 minutos.</p>
         <div style="margin: 30px 0;">
@@ -79,18 +92,19 @@ def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, at
     msg["To"] = to_email
     
     html_content = f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
-        <h2 style="color: #0A0A0A;">Certificado Botánico de Dárboles</h2>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        {get_logo_html()}
+        <h2 style="color: #0A0A0A; letter-spacing: -0.02em;">Certificado Botánico</h2>
         <p style="color: #666666; font-size: 16px;">¡Hola {gift.recipient_name}!</p>
-        <p style="color: #666666; font-size: 16px;">{gift.buyer_name} te ha obsequiado la tutela directa de la especie <strong>{tree_name}</strong> a través de nuestra infraestructura tecnológica de mitigación.</p>
+        <p style="color: #666666; font-size: 16px;">{gift.buyer_name} te ha obsequiado un hermoso ejemplar de <strong>{tree_name}</strong>.</p>
         
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; color: #475569; font-style: italic;">"{gift.message or 'Un regalo al planeta y a ti.'}"</p>
+            <p style="margin: 0; color: #475569; font-style: italic;">"{gift.message or 'Un regalo lleno de vida.'}"</p>
         </div>
         
-        <p style="color: #666666; font-size: 16px;">Adjunto a este correo encontrarás el certificado de propiedad y mitigación expedido por Dárboles. Guárdalo, es el documento oficial de esta siembra.</p>
+        <p style="color: #666666; font-size: 16px;">Adjunto a este correo encontrarás el certificado expedido por Dárboles que conmemora este regalo. Plantaremos y cuidaremos este árbol con la mejor disposición.</p>
         
-        <p style="color: #999999; font-size: 14px; margin-top: 40px;">Verifica la autenticidad e injerencia climática en nuestro portal de transparencia.</p>
+        <p style="color: #999999; font-size: 14px; margin-top: 40px;">Gracias por hacer crecer los bosques con Dárboles.</p>
     </div>
     """
     msg.attach(MIMEText(html_content, "html"))
@@ -131,10 +145,11 @@ def send_order_verified_email(to_email: str, buyer_name: str, order_id: str):
     msg["To"] = to_email
 
     html_content = f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        {get_logo_html()}
         <h2 style="color: #0A0A0A;">Pago Recibido Exitosamente</h2>
         <p style="color: #666666; font-size: 16px;">Hola {buyer_name},</p>
-        <p style="color: #666666; font-size: 16px;">Hemos validado tu transferencia SINPE. Tu pedido <strong>#{order_id}</strong> se encuentra ahora en proceso de preparación y logística para su envío o siembra correspondiente.</p>
+        <p style="color: #666666; font-size: 16px;">Hemos validado tu transferencia SINPE. Tu pedido <strong>#{order_id}</strong> se encuentra ahora en proceso de preparación y logística para su envío.</p>
         <p style="color: #666666; font-size: 16px;">Te notificaremos una vez que la orden sea entregada.</p>
         <p style="color: #999999; font-size: 14px; margin-top: 40px;">Gracias por apoyar el ecosistema Dárboles.</p>
     </div>
@@ -167,7 +182,8 @@ def send_order_delivered_email(to_email: str, recipient_name: str, tree_name: st
     msg["To"] = to_email
 
     html_content = f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        {get_logo_html()}
         <h2 style="color: #0A0A0A;">Paquete Entregado</h2>
         <p style="color: #666666; font-size: 16px;">Hola {recipient_name},</p>
         <p style="color: #666666; font-size: 16px;">Tu ejemplar de <strong>{tree_name}</strong> ha sido exitosamente entregado al destinatario para su cuidado y siembra.</p>

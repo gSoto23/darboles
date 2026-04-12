@@ -79,3 +79,14 @@ postgres_data/
 *.njsproj
 *.sln
 *.sw?
+
+# =========================
+# ARCHIVOS LOCALES DE PRUEBA Y SUBIDAS
+# =========================
+uploads/
+backend/uploads/
+preview_correo.html
+backend/test_emails.py
+tests/
+*.pdf
+*mock*

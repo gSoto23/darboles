@@ -395,7 +395,14 @@ export default function AdminDashboard() {
                 { key: 'id', label: 'ID Pedido', render: (row: any) => `#${row.id}` },
                 { key: 'client', label: 'Cliente', render: (row: any) => <><span style={{ fontWeight: 500 }}>{row.buyer_name}</span><div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{row.buyer_email}</div></> },
                 { key: 'tree', label: 'Árbol Solicitado', render: (row: any) => row.tree ? `${row.quantity}x ${row.tree.name}` : `${row.quantity}x Especie ID: ${row.tree_id}` },
-                { key: 'ref', label: 'Referencia Bancaria', render: (row: any) => <span style={{ color: 'var(--color-muted)' }}>{row.transaction_ref || 'N/A'}</span> },
+                { key: 'created_at', label: 'Fecha (CR)', render: (row: any) => (
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-foreground)' }}>
+                      {row.created_at ? new Date(row.created_at + 'Z').toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                    </span>
+                )},
+                { key: 'ref', label: 'Ref. Bancaria', render: (row: any) => (
+                  <span style={{ color: 'var(--color-muted)' }}>{row.transaction_ref || 'N/A'}</span>
+                )},
                 { key: 'status', label: 'Estado', render: (row: any) => (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-start' }}>
                     <span className={`${styles.statusBadge} ${row.status === 'paid' || row.status === 'delivered' || row.status === 'shipped' ? styles.statusSuccess : styles.statusPending}`}>
