@@ -18,7 +18,7 @@ export default function Navbar() {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await fetch('http://localhost:8001/api/v1/auth/me', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {

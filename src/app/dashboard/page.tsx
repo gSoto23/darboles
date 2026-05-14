@@ -55,7 +55,7 @@ export default function DashboardPage() {
 
     const fetchData = async () => {
       try {
-        const authRes = await fetch('http://localhost:8001/api/v1/auth/me', {
+        const authRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (authRes.ok) {
@@ -70,7 +70,7 @@ export default function DashboardPage() {
           router.push('/login');
         }
 
-        const giftsRes = await fetch('http://localhost:8001/api/v1/inventory/me/gifts', {
+        const giftsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/inventory/me/gifts`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (giftsRes.ok) {
@@ -110,7 +110,7 @@ export default function DashboardPage() {
         payload.current_password = currentPassword;
       }
 
-      const res = await fetch('http://localhost:8001/api/v1/auth/me', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/auth/me`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

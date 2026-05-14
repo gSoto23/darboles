@@ -55,7 +55,7 @@ export default function RegalosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:8001/api/v1/admin/trees')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/trees`)
       .then(res => res.json())
       .then(data => {
         setTrees(data);
@@ -122,7 +122,7 @@ export default function RegalosPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8001/api/v1/payments/checkout/gift', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/payments/checkout/gift`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -176,7 +176,7 @@ export default function AdminDashboard() {
         return;
       }
       try {
-        const res = await fetch('http://localhost:8001/api/v1/auth/me', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) {
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:8001/api/v1/admin/users', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if(res.ok) setUsers(await res.json());
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:8001/api/v1/admin/gifts', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/gifts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
       fetchGifts();
     }
     if (activeTab === 'catalogo') {
-      fetch('http://localhost:8001/api/v1/admin/trees')
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/trees`)
         .then(res => res.json())
         .then(data => setTrees(data))
         .catch(err => console.error(err));
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
     }
 
     if (activeTab === 'configuracion') {
-      fetch('http://localhost:8001/api/v1/config')
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/config`)
         .then(res => res.json())
         .then(data => setStoreConfig(data))
         .catch(err => console.error(err));
@@ -272,8 +272,8 @@ export default function AdminDashboard() {
     const token = localStorage.getItem('token');
     try {
       const url = editingSpeciesId 
-        ? `http://localhost:8001/api/v1/admin/trees/${editingSpeciesId}`
-        : `http://localhost:8001/api/v1/admin/trees`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees/${editingSpeciesId}`
+        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees`;
       const method = editingSpeciesId ? 'PATCH' : 'POST';
       
       const res = await fetch(url, {
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         setIsSpeciesModalOpen(false);
-        const resTrees = await fetch('http://localhost:8001/api/v1/admin/trees');
+        const resTrees = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/trees`);
         setTrees(await resTrees.json());
       }
     } catch (err) {
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
   const handleToggleAdmin = async (userId: number, currentStatus: boolean) => {
     const token = localStorage.getItem('token');
     try {
-      await fetch(`http://localhost:8001/api/v1/admin/users/${userId}/role`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/users/${userId}/role`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`http://localhost:8001/api/v1/admin/gifts/${giftId}/status`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/gifts/${giftId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
               e.preventDefault();
               const token = localStorage.getItem('token');
               try {
-                const res = await fetch('http://localhost:8001/api/v1/admin/config', {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/config`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                   body: JSON.stringify(storeConfig)
