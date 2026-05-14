@@ -18,17 +18,17 @@ def seed():
         print("Starting seed...")
 
         # 1. Super User
-        admin1 = db.query(User).filter_by(email="admin@darboles.com").first()
+        admin1 = db.query(User).filter_by(email="darboles@gmail.com").first()
         if not admin1:
             admin1 = User(
-                email="admin@darboles.com", 
+                email="darboles@gmail.com", 
                 hashed_password=get_password_hash("231287"), 
                 is_admin=True, 
                 is_superadmin=True, 
                 full_name="Super Admin"
             )
             db.add(admin1)
-            print("Created Super Admin: admin@darboles.com")
+            print("Created Super Admin: darboles@gmail.com")
 
         # 2. Admin Normal
         test1 = db.query(User).filter_by(email="test@darboles.com").first()
