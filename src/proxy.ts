@@ -16,11 +16,10 @@ export function proxy(request: NextRequest) {
   // 3. Check if they already have the language cookie mapped
   const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
 
-  if (!cookieLocale) {
-    // 4. Set default locale based on country code if none exists
-    const inferredLocale = SPANISH_SPEAKING_COUNTRIES.includes(country) ? 'es' : 'en';
-    response.cookies.set('NEXT_LOCALE', inferredLocale, { path: '/' });
-  }
+    if (!cookieLocale) {
+      // 4. Set default locale to 'es' always
+      response.cookies.set('NEXT_LOCALE', 'es', { path: '/' });
+    }
 
   return response;
 }
