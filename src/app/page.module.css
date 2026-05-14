@@ -8,7 +8,7 @@
   padding: 8rem 2rem 4rem 2rem;
   position: relative;
   overflow: hidden;
-  background-image: url('/background-mobile.jpg');
+  background-image: url('/background-mobile.jpg?v=2');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -16,7 +16,7 @@
 
 @media (min-width: 768px) {
   .heroContainer {
-    background-image: url('/background-desktop.jpg');
+    background-image: url('/background-desktop.jpg?v=2');
   }
 }
 
