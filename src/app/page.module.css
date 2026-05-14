@@ -8,20 +8,16 @@
   padding: 8rem 2rem 4rem 2rem;
   position: relative;
   overflow: hidden;
+  background-image: url('/background-mobile.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* Sutil gradiente de fondo radial para darle volumen sin perder el minimalismo */
-.heroContainer::before {
-  content: '';
-  position: absolute;
-  top: -10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80vw;
-  height: 80vw;
-  background: radial-gradient(circle, rgba(0,0,0,0.03) 0%, rgba(255,255,255,0) 70%);
-  z-index: -1;
-  pointer-events: none;
+@media (min-width: 768px) {
+  .heroContainer {
+    background-image: url('/background-desktop.jpg');
+  }
 }
 
 .badge {
