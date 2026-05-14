@@ -176,7 +176,7 @@ export default function AdminDashboard() {
         return;
       }
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/auth/me`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) {
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/users`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if(res.ok) setUsers(await res.json());
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/gifts`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/gifts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
       fetchGifts();
     }
     if (activeTab === 'catalogo') {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/trees`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees`)
         .then(res => res.json())
         .then(data => setTrees(data))
         .catch(err => console.error(err));
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
     }
 
     if (activeTab === 'configuracion') {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/config`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/config`)
         .then(res => res.json())
         .then(data => setStoreConfig(data))
         .catch(err => console.error(err));
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         setIsSpeciesModalOpen(false);
-        const resTrees = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/trees`);
+        const resTrees = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees`);
         setTrees(await resTrees.json());
       }
     } catch (err) {
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
               e.preventDefault();
               const token = localStorage.getItem('token');
               try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/config`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/config`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                   body: JSON.stringify(storeConfig)

@@ -81,7 +81,7 @@ export default function RegalosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/admin/trees`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees`)
       .then(res => res.json())
       .then(data => {
         setTrees(data);
@@ -92,7 +92,7 @@ export default function RegalosPage() {
         setLoading(false);
       });
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/config`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/config`)
       .then(res => res.json())
       .then(data => setStoreConfig(data))
       .catch(console.error);
@@ -228,7 +228,7 @@ export default function RegalosPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || \"http://localhost:8001/api/v1\"}/payments/checkout/gift`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/payments/checkout/gift`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
