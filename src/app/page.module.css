@@ -10,13 +10,23 @@
   overflow: hidden;
   background-image: url('/background-mobile.jpg?v=2');
   background-size: cover;
-  background-position: center;
+  background-position: bottom center;
   background-repeat: no-repeat;
 }
 
-@media (min-width: 768px) {
+/* Tablets and iPads */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .heroContainer {
+    background-image: url('/background-tablet.jpg?v=2');
+    background-position: bottom center;
+  }
+}
+
+/* Laptops and Desktops */
+@media (min-width: 1025px) {
   .heroContainer {
     background-image: url('/background-desktop.jpg?v=2');
+    background-position: bottom center;
   }
 }
 
