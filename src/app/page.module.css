@@ -14,16 +14,16 @@
   background-repeat: no-repeat;
 }
 
-/* Tablets and iPads */
-@media (min-width: 768px) and (max-width: 1024px) {
+/* Tablets and Small Laptops */
+@media (min-width: 768px) and (max-width: 1499px) {
   .heroContainer {
     background-image: url('/background-tablet.jpg?v=2');
     background-position: bottom center;
   }
 }
 
-/* Laptops and Desktops */
-@media (min-width: 1025px) {
+/* Large Desktops */
+@media (min-width: 1500px) {
   .heroContainer {
     background-image: url('/background-desktop.jpg?v=2');
     background-position: bottom center;
