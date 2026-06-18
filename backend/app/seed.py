@@ -61,21 +61,39 @@ def seed():
         # Fetch models to ensure they have an ID
         user1 = db.query(User).filter_by(email="user@darboles.com").first()
 
-        # Ensure we have at least one tree species
+        # Seed 12 new species
+        species_data = [
+            {"name": "Limón Mesino", "scientific_name": "Citrus × aurantiifolia", "description": "Árbol cítrico ideal para patios y macetones.", "co2": 15.0, "price": 15000, "image": "/api/uploads/trees/limon_mesino.png"},
+            {"name": "Mandarina Clementina", "scientific_name": "Citrus × clementina", "description": "Cítrico de tamaño manejable y estético, produce fruta dulce.", "co2": 15.0, "price": 15000, "image": "/api/uploads/trees/mandarina_clementina.png"},
+            {"name": "Limon Mandarina", "scientific_name": "Citrus × taitensis", "description": "Árbol cítrico con frutos anaranjados, ideal para jardines.", "co2": 15.0, "price": 15000, "image": "/api/uploads/trees/limon_mandarina.png"},
+            {"name": "Cas", "scientific_name": "Psidium friedrichsthalianum", "description": "Frutal menor, de porte arbustivo y compacto.", "co2": 14.0, "price": 15000, "image": "/api/uploads/trees/cas.png"},
+            {"name": "Guayaba", "scientific_name": "Psidium guajava", "description": "Porte de arbusto o árbol pequeño, muy manejable.", "co2": 14.0, "price": 15000, "image": "/api/uploads/trees/guayaba.png"},
+            {"name": "Mango", "scientific_name": "Mangifera indica", "description": "Frutal tropical de hermoso follaje rojizo en hojas jóvenes.", "co2": 25.0, "price": 15000, "image": "/api/uploads/trees/mango.png"},
+            {"name": "Manzana de Agua", "scientific_name": "Syzygium malaccense", "description": "Árbol de vistosas flores rojas y frutos en forma de campana.", "co2": 20.0, "price": 15000, "image": "/api/uploads/trees/manzana_agua.png"},
+            {"name": "Aguacate", "scientific_name": "Persea americana", "description": "Árbol frutal de hojas grandes y verdes, muy apreciado.", "co2": 20.0, "price": 15000, "image": "/api/uploads/trees/aguacate.png"},
+            {"name": "Franjipani", "scientific_name": "Plumeria rubra", "description": "Arbolito de poco follaje pero con flores increíblemente fragantes.", "co2": 10.0, "price": 15000, "image": "/api/uploads/trees/franjipani.png"},
+            {"name": "Calistemo", "scientific_name": "Callistemon viminalis", "description": "Árbol pequeño con flores rojas tipo limpiatubos.", "co2": 15.0, "price": 15000, "image": "/api/uploads/trees/calistemo.png"},
+            {"name": "Aromo", "scientific_name": "Acacia farnesiana", "description": "Árbol pequeño de flores amarillas muy aromáticas.", "co2": 15.0, "price": 15000, "image": "/api/uploads/trees/aromo.png"},
+            {"name": "Naranja", "scientific_name": "Citrus × sinensis", "description": "Árbol cítrico clásico, excelente para producir fruta fresca.", "co2": 15.0, "price": 15000, "image": "/api/uploads/trees/naranja.png"}
+        ]
+
+        for s in species_data:
+            existing = db.query(TreeSpecies).filter_by(name=s["name"]).first()
+            if not existing:
+                new_tree = TreeSpecies(
+                    name=s["name"],
+                    scientific_name=s["scientific_name"],
+                    description=s["description"],
+                    co2_capture_capacity_kg_per_year=s["co2"],
+                    price_crc=s["price"],
+                    image_url=s["image"],
+                    stock=100
+                )
+                db.add(new_tree)
+        db.commit()
+        print("Created 12 Tree Species")
+
         tree1 = db.query(TreeSpecies).first()
-        if not tree1:
-            tree1 = TreeSpecies(
-                name="Corteza Amarilla",
-                scientific_name="Tabebuia ochracea",
-                description="Árbol espectacular que florea en época seca.",
-                co2_capture_capacity_kg_per_year=22.5,
-                price_crc=12875,
-                image_url="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=600"
-            )
-            db.add(tree1)
-            db.commit()
-            db.refresh(tree1)
-            print("Created Tree Species")
 
         # Ensure User has 4 trees via Gifts
         gifts = db.query(Gift).filter_by(buyer_email="user@darboles.com").all()
