@@ -167,6 +167,7 @@ export default function AdminDashboard() {
     description: '', co2_capture_capacity_kg_per_year: 0, image_url: '',
     stock: 0, is_active: true
   });
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -294,6 +295,38 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees/upload-image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const fullUrl = data.image_url.startsWith('http') ? data.image_url : `http://localhost:8001${data.image_url}`;
+        setSpeciesForm({...speciesForm, image_url: fullUrl});
+        toast.success("Imagen subida correctamente");
+      } else {
+        toast.error("Error al subir imagen");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error de conexión");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleToggleAdmin = async (userId: number, currentStatus: boolean) => {
     const token = localStorage.getItem('token');
@@ -607,8 +640,19 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>URL Fotografía Alta Resolución</label>
-                <input required type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' }} value={speciesForm.image_url} onChange={(e) => setSpeciesForm({...speciesForm, image_url: e.target.value})} placeholder="https://..." />
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Imagen Alta Resolución</label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }} disabled={isUploading} />
+                    <input type="text" style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)', fontSize: '0.85rem' }} value={speciesForm.image_url} onChange={(e) => setSpeciesForm({...speciesForm, image_url: e.target.value})} placeholder="URL de la imagen (o sube un archivo)" />
+                  </div>
+                  {speciesForm.image_url && (
+                    <div style={{ width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
+                       <img src={speciesForm.image_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                </div>
+                {isUploading && <p style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '0.5rem' }}>Subiendo imagen...</p>}
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from app.core.database import get_db
@@ -40,6 +42,21 @@ def update_tree(tree_id: int, tree_update: TreeSpeciesUpdate, db: Session = Depe
     db.commit()
     db.refresh(db_tree)
     return db_tree
+
+@router.post("/trees/upload-image")
+async def upload_tree_image(file: UploadFile = File(...)):
+    upload_dir = os.path.join(os.getcwd(), "uploads", "trees")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename to avoid overwrites
+    ext = os.path.splitext(file.filename)[1]
+    new_filename = f"{uuid.uuid4().hex}{ext}"
+    file_path = os.path.join(upload_dir, new_filename)
+    
+    with open(file_path, "wb") as buffer:
+        buffer.write(await file.read())
+    
+    return {"image_url": f"/api/uploads/trees/{new_filename}"}
 
 @router.get("/gifts", response_model=List[GiftRead])
 def get_gifts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
