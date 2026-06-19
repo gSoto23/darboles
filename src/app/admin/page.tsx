@@ -794,9 +794,17 @@ export default function AdminDashboard() {
                               {tt.status === 'planted' ? `🌳 Plantado por ${tt.planter_name || 'Alguien'}` : '🌱 Esperando matrícula'}
                             </span>
                           </div>
-                          {tt.status === 'planted' && tt.photo_url && (
-                             <a href={tt.photo_url.startsWith('http') ? tt.photo_url : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1').replace('/api/v1', '') + tt.photo_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Ver Evidencia</a>
-                          )}
+                          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1'}/tracking/${tt.id_code}/certificate`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', background: '#0f172a', color: '#fff', borderRadius: '4px', textDecoration: 'none', fontWeight: 600 }}>
+                              ↓ Certificado PDF
+                            </a>
+                            <div style={{ position: 'relative', width: '40px', height: '40px', background: '#fff', padding: '2px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
+                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://darboles.com/registro?id=${tt.id_code}`)}`} alt="QR" style={{ width: '100%', height: '100%', objectFit: 'contain' }} title={`Escanear para matricular: ${tt.id_code}`} />
+                            </div>
+                            {tt.status === 'planted' && tt.photo_url && (
+                               <a href={tt.photo_url.startsWith('http') ? tt.photo_url : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1').replace('/api/v1', '') + tt.photo_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Foto</a>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
