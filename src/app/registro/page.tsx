@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 function RegistroForm() {
@@ -23,12 +23,11 @@ function RegistroForm() {
   const [photoUrl, setPhotoUrl] = useState('');
   const [isCapturingGPS, setIsCapturingGPS] = useState(false);
 
-  const handleValidate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateCode = async (code: string) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/tracking/${idCode}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/tracking/${code}`);
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.detail || "Código inválido o no encontrado");
@@ -44,6 +43,17 @@ function RegistroForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (initialId && step === 'validate') {
+      validateCode(initialId);
+    }
+  }, [initialId]);
+
+  const handleValidate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    validateCode(idCode);
   };
 
   const captureGPS = () => {
