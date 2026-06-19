@@ -10,11 +10,12 @@ Conéctate a tu servidor mediante SSH y actualiza los paquetes del sistema:
 sudo apt update && sudo apt upgrade -y
 ```
 
-### Instalar Docker y Docker Compose
-Requerido para aislar la base de datos y el backend.
+### Instalar Docker y Docker Compose (Versión Moderna)
+Requerido para aislar la base de datos y el backend. Para evitar bugs de versiones antiguas en Ubuntu, usaremos el script de instalación oficial de Docker:
 
 ```bash
-sudo apt install docker.io docker-compose -y
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 sudo systemctl enable docker
 sudo systemctl start docker
 ```
@@ -74,15 +75,29 @@ Guarda los cambios (`Ctrl+O`, `Enter`, `Ctrl+X`).
 En producción, no queremos que Uvicorn se recargue automáticamente (`--reload`). Te recomendamos abrir tu archivo `docker-compose.yml` y asegurarte de que el comando del backend sea:
 `command: uvicorn app.main:app --host 0.0.0.0 --port 8000`
 
-Luego, levanta los contenedores en segundo plano (`-d`):
+Luego, levanta los contenedores en segundo plano (`-d`) usando el comando moderno con espacio (`docker compose`):
 
 ```bash
-sudo docker-compose up -d --build
+sudo docker compose up -d --build
 ```
 
 Para verificar que estén corriendo correctamente sin errores:
 ```bash
-sudo docker-compose logs -f backend
+sudo docker compose logs -f backend
+```
+
+### Inicializar la Base de Datos
+Si tienes un archivo para poblar tu base de datos (por ejemplo, `seed.py`), debes ejecutarlo *adentro* del contenedor de Docker una vez que el backend esté arriba:
+```bash
+sudo docker compose exec backend python app/seed.py
+```
+
+### Subir archivos ignorados por Git
+¡Atención! Carpetas como `backend/uploads/` (donde se guardan imágenes) suelen estar ignoradas en tu archivo `.gitignore` por seguridad y no llegarán al servidor con `git pull`. Debes copiarlas manualmente desde tu computadora local usando `scp`:
+
+En la terminal de tu computadora (Mac/PC local):
+```bash
+scp -i /ruta/a/tu/llave.pem -r /ruta/local/a/darboles/backend/uploads/ ubuntu@IP_DEL_SERVIDOR:~/darboles/backend/
 ```
 
 ---
@@ -162,3 +177,25 @@ sudo certbot --nginx -d tudominio.com -d www.tudominio.com
 ```
 
 Sigue las instrucciones en pantalla, Certbot actualizará automáticamente tu archivo de Nginx para redirigir el tráfico HTTP a HTTPS seguro. ¡Listo! Tu proyecto ahora está en producción.
+
+---
+
+## 7. Pasos Rápidos para Re-Desplegar (Actualizaciones)
+Cuando hagas cambios en tu código local, uses `git push` y quieras que esos cambios se reflejen en producción, sigue **siempre** esta secuencia exacta en tu servidor:
+
+```bash
+cd ~/darboles
+git pull origin main
+
+# 1. Si cambiaste código de Python (Backend) o quieres inyectar base de datos
+sudo docker compose up -d --build
+
+# (Opcional) Si necesitas inyectar nuevos árboles
+sudo docker compose exec backend python app/seed.py
+
+# 2. Si cambiaste código de React/Next.js (Frontend)
+npm install
+npm run build
+pm2 restart darboles-web
+```
+*(Nota: Recuerda usar `scp` para subir archivos que Git ignora, como el catálogo de imágenes)*

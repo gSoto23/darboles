@@ -314,7 +314,12 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        const fullUrl = data.image_url.startsWith('http') ? data.image_url : `http://localhost:8001${data.image_url}`;
+        // Fallback robusto para evitar http://localhost:8001 duro en prod
+        let fullUrl = data.image_url;
+        if (!fullUrl.startsWith('http')) {
+           const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+           fullUrl = isLocal ? `http://localhost:8001${fullUrl}` : fullUrl;
+        }
         setSpeciesForm({...speciesForm, image_url: fullUrl});
         toast.success("Imagen subida correctamente");
       } else {
@@ -487,6 +492,7 @@ export default function AdminDashboard() {
           <div className="slide-up">
              <SmartTable 
               data={trees} 
+              disablePagination={true}
               columns={[
                 { key: 'id', label: 'ID', render: (row: any) => `#${row.id}` },
                 { key: 'name', label: 'Nombre Común', render: (row: any) => <span style={{ fontWeight: 500 }}>{row.name}</span> },

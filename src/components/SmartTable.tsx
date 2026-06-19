@@ -14,6 +14,7 @@ interface SmartTableProps<T> {
   pageSize?: number;
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
+  disablePagination?: boolean;
 }
 
 export default function SmartTable<T extends Record<string, any>>({ 
@@ -21,7 +22,8 @@ export default function SmartTable<T extends Record<string, any>>({
   columns, 
   pageSize = 5,
   emptyMessage = "No hay datos disponibles",
-  onRowClick
+  onRowClick,
+  disablePagination = false
 }: SmartTableProps<T>) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,8 +55,8 @@ export default function SmartTable<T extends Record<string, any>>({
   }, [filteredData, sortKey, sortOrder]);
 
   // Paginate
-  const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
-  const currentData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = disablePagination ? 1 : Math.ceil(sortedData.length / pageSize) || 1;
+  const currentData = disablePagination ? sortedData : sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleSort = (key: keyof T | string) => {
     if (sortKey === key) {
@@ -88,7 +90,7 @@ export default function SmartTable<T extends Record<string, any>>({
       </div>
 
       {/* Table Data */}
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflowX: 'auto', overflowY: disablePagination ? 'auto' : 'visible', maxHeight: disablePagination ? '65vh' : 'none', WebkitOverflowScrolling: 'touch' }}>
         <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: 'var(--color-background)', borderBottom: '1px solid var(--color-border)' }}>
@@ -139,8 +141,9 @@ export default function SmartTable<T extends Record<string, any>>({
       </div>
 
       {/* Pagination Container */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem', marginTop: '0.5rem' }}>
-        <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>
+      {!disablePagination && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>
           Mostrando {sortedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} a {Math.min(currentPage * pageSize, sortedData.length)} de {sortedData.length} registros
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -176,6 +179,7 @@ export default function SmartTable<T extends Record<string, any>>({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
