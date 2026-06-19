@@ -17,6 +17,8 @@ export default function Footer() {
           <div className={styles.linkGroup}>
             <span className={styles.linkTitle}>{t("footer.platform")}</span>
             <Link href="/regalos" className={styles.link}>{t("footer.store")}</Link>
+            <Link href="/registro" className={styles.link}>Registrar mi Árbol</Link>
+            <Link href="/mapa" className={styles.link}>Mapa de Impacto</Link>
           </div>
           <div className={styles.linkGroup}>
             <span className={styles.linkTitle}>{t("footer.company")}</span>
