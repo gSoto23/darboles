@@ -10,6 +10,7 @@ from app.schemas.tree import TreeSpeciesCreate, TreeSpeciesResponse, TreeSpecies
 from app.schemas.gift import GiftRead, GiftStatusUpdate
 from app.core.mailer import send_order_verified_email, send_order_delivered_email
 from typing import List
+from datetime import datetime
 
 router = APIRouter()
 
@@ -111,6 +112,7 @@ def update_gift_status(gift_id: int, status_update: GiftStatusUpdate, db: Sessio
             pdf_paths.append(pdf_path)
 
         db_gift.certificate_url = ",".join(pdf_paths)
+        db_gift.certificate_sent_at = datetime.utcnow()
         db.commit()
 
         # Send to Recipient
@@ -122,4 +124,34 @@ def update_gift_status(gift_id: int, status_update: GiftStatusUpdate, db: Sessio
             attachment_path=pdf_paths
         )
 
+    return db_gift
+
+@router.post("/gifts/{gift_id}/resend-certificate", response_model=GiftRead)
+def resend_gift_certificate(gift_id: int, db: Session = Depends(get_db)):
+    db_gift = db.query(Gift).filter(Gift.id == gift_id).first()
+    if not db_gift or db_gift.status != "delivered":
+        raise HTTPException(status_code=400, detail="Pedido no encontrado o no entregado aún")
+
+    from app.services.pdf_generator import generate_gift_certificate
+    from app.core.mailer import send_certificate_email
+
+    pdf_paths = []
+    for tracked_tree in db_gift.tracked_trees:
+        pdf_path = generate_gift_certificate(db_gift, db_gift.tree, tracked_tree)
+        pdf_paths.append(pdf_path)
+
+    db_gift.certificate_url = ",".join(pdf_paths)
+    db_gift.certificate_sent_at = datetime.utcnow()
+    db.commit()
+
+    tree_name = db_gift.tree.name if db_gift.tree else "Árbol"
+    send_certificate_email(
+        to_email=db_gift.recipient_email,
+        subject=f"Tu regalo botánico de {db_gift.buyer_name} ha llegado",
+        gift=db_gift,
+        tree_name=tree_name,
+        attachment_path=pdf_paths
+    )
+
+    db.refresh(db_gift)
     return db_gift

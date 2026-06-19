@@ -37,6 +37,7 @@ class Gift(Base):
     payment_receipt_url = Column(String, nullable=True)
     payment_receipt_method = Column(String, nullable=True) # "upload", "whatsapp"
     created_at = Column(DateTime, default=datetime.utcnow)
+    certificate_sent_at = Column(DateTime, nullable=True)
     
     campaign_id = Column(Integer, ForeignKey("campaigns.id"), nullable=True)
     

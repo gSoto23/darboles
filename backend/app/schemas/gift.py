@@ -20,6 +20,7 @@ class GiftBase(BaseModel):
     status: Optional[str] = "pending"
     certificate_url: Optional[str] = None
     created_at: Optional[datetime] = None
+    certificate_sent_at: Optional[datetime] = None
 
 class GiftRead(GiftBase):
     id: int

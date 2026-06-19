@@ -364,7 +364,11 @@ export default function AdminDashboard() {
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
-        fetchGifts();
+        const updatedGift = await res.json();
+        setGifts(prev => prev.map(g => g.id === giftId ? updatedGift : g));
+        if (selectedGift && selectedGift.id === giftId) {
+          setSelectedGift(updatedGift);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -477,7 +481,11 @@ export default function AdminDashboard() {
 
                       {row.status === 'shipped' && (
                         <button 
-                          onClick={() => handleUpdateGiftStatus(row.id, 'delivered')}
+                          onClick={() => {
+                            if(window.confirm('¿Confirmas que el árbol ha sido entregado? Se generarán los códigos QR y se enviará el certificado por correo al destinatario.')) {
+                              handleUpdateGiftStatus(row.id, 'delivered');
+                            }
+                          }}
                           style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: 'none', background: '#3b82f6', color: 'white', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
                         >Entregado</button>
                       )}
@@ -784,7 +792,43 @@ export default function AdminDashboard() {
 
                 {selectedGift.tracked_trees && selectedGift.tracked_trees.length > 0 && (
                   <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
-                    <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--color-foreground)' }}>Códigos de Trazabilidad Generados</h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <h4 style={{ margin: '0', fontSize: '0.85rem', color: 'var(--color-foreground)' }}>Códigos de Trazabilidad Generados</h4>
+                      <div style={{ textAlign: 'right' }}>
+                        <button 
+                          onClick={async () => {
+                            if(window.confirm('¿Estás seguro de que deseas reenviar el certificado por correo al destinatario?')) {
+                              const toastId = toast.loading('Reenviando certificado...');
+                              try {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1'}/admin/gifts/${selectedGift.id}/resend-certificate`, {
+                                  method: 'POST',
+                                  headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                if (res.ok) {
+                                  toast.success('Certificado reenviado exitosamente', { id: toastId });
+                                  const updatedGift = await res.json();
+                                  setGifts(prev => prev.map(g => g.id === updatedGift.id ? updatedGift : g));
+                                  setSelectedGift(updatedGift);
+                                } else {
+                                  toast.error('Error al reenviar el certificado', { id: toastId });
+                                }
+                              } catch(e) {
+                                toast.error('Error de red', { id: toastId });
+                              }
+                            }
+                          }}
+                          style={{ background: 'transparent', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                          ✉️ Reenviar Certificado
+                        </button>
+                        {selectedGift.certificate_sent_at && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)', marginTop: '0.3rem' }}>
+                            Último envío: {new Date(selectedGift.certificate_sent_at + 'Z').toLocaleString('es-CR')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <div style={{ display: 'grid', gap: '0.75rem' }}>
                       {selectedGift.tracked_trees.map(tt => (
                         <div key={tt.id_code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-background)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
