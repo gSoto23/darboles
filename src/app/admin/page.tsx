@@ -43,6 +43,7 @@ interface Gift {
   payment_receipt_url?: string;
   payment_receipt_method?: string;
   tree?: TreeSpecies;
+  tracked_trees?: any[];
 }
 
 import Loader from '@/components/Loader';
@@ -779,6 +780,27 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <p>ID Especie: {selectedGift.tree_id} (Cantidad: {selectedGift.quantity})</p>
+                )}
+
+                {selectedGift.tracked_trees && selectedGift.tracked_trees.length > 0 && (
+                  <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--color-foreground)' }}>Códigos de Trazabilidad Generados</h4>
+                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                      {selectedGift.tracked_trees.map(tt => (
+                        <div key={tt.id_code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-background)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
+                          <div>
+                            <span style={{ fontWeight: 600, letterSpacing: '1px', fontSize: '0.9rem' }}>{tt.id_code}</span>
+                            <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-muted)', marginTop: '0.2rem' }}>
+                              {tt.status === 'planted' ? `🌳 Plantado por ${tt.planter_name || 'Alguien'}` : '🌱 Esperando matrícula'}
+                            </span>
+                          </div>
+                          {tt.status === 'planted' && tt.photo_url && (
+                             <a href={tt.photo_url.startsWith('http') ? tt.photo_url : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1').replace('/api/v1', '') + tt.photo_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Ver Evidencia</a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 

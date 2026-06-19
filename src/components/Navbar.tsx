@@ -78,6 +78,8 @@ export default function Navbar() {
         {/* Desktop Links & Mobile Dropdown */}
         <div className={`${styles.links} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
           <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>{t("navbar.store")}</Link>
+          <Link href="/registro" className={styles.link} onClick={handleLinkClick}>Registrar mi Árbol</Link>
+          <Link href="/mapa" className={styles.link} onClick={handleLinkClick}>Mapa de Impacto</Link>
 
           <button 
             onClick={() => {
