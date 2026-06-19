@@ -42,6 +42,7 @@ interface Gift {
   shipping_cost_applied?: number;
   payment_receipt_url?: string;
   payment_receipt_method?: string;
+  certificate_sent_at?: string;
   tree?: TreeSpecies;
   tracked_trees?: any[];
 }

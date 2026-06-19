@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('gifts', sa.Column('certificate_sent_at', sa.DateTime(), nullable=True))
+    op.execute('ALTER TABLE gifts ADD COLUMN IF NOT EXISTS certificate_sent_at TIMESTAMP')
 
 def downgrade() -> None:
     op.drop_column('gifts', 'certificate_sent_at')
