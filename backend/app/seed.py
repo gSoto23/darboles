@@ -9,6 +9,9 @@ from app.core.database import SessionLocal
 from app.models.user import User
 from app.models.tree import TreeSpecies
 from app.models.gift import Gift
+from app.models.config import StoreConfig
+from app.models.campaign import Campaign
+from app.models.tracked_tree import TrackedTree
 from app.core.security import get_password_hash
 from datetime import date
 

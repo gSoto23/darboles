@@ -74,7 +74,7 @@ def send_reset_password_email(to_email: str, token: str):
         print(f"Error enviando correo SMTP: {e}")
         return False
 
-def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, attachment_path: str):
+def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, attachment_path):
     """
     Simulates or sends an email with the PDF attached.
     """
@@ -109,15 +109,18 @@ def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, at
     """
     msg.attach(MIMEText(html_content, "html"))
     
-    # Attach PDF
-    try:
-        with open(attachment_path, "rb") as f:
-            pdf_attachment = MIMEApplication(f.read(), _subtype="pdf")
-            pdf_attachment.add_header('Content-Disposition', 'attachment', filename=f"{tree_name}_Certificado.pdf")
-            msg.attach(pdf_attachment)
-    except Exception as e:
-        print(f"Error procesando archivo adjunto: {e}")
-        return False
+    # Attach PDFs
+    attachments = [attachment_path] if isinstance(attachment_path, str) else attachment_path
+    for i, path in enumerate(attachments):
+        try:
+            with open(path, "rb") as f:
+                pdf_attachment = MIMEApplication(f.read(), _subtype="pdf")
+                filename = f"{tree_name}_Certificado_{i+1}.pdf" if len(attachments) > 1 else f"{tree_name}_Certificado.pdf"
+                pdf_attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+                msg.attach(pdf_attachment)
+        except Exception as e:
+            print(f"Error procesando archivo adjunto {path}: {e}")
+            return False
 
     try:
         from smtplib import SMTP

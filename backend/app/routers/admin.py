@@ -84,9 +84,33 @@ def update_gift_status(gift_id: int, status_update: GiftStatusUpdate, db: Sessio
     elif status_update.status == "delivered":
         from app.services.pdf_generator import generate_gift_certificate
         from app.core.mailer import send_certificate_email
+        from app.models.tracked_tree import TrackedTree
+        import string
+        import random
 
-        pdf_path = generate_gift_certificate(db_gift, db_gift.tree)
-        db_gift.certificate_url = pdf_path
+        # Generar TrackedTrees si no existen
+        if not db_gift.tracked_trees:
+            prefix = db_gift.campaign.prefix if db_gift.campaign else "DAR"
+            for i in range(db_gift.quantity):
+                suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                unique_code = f"{prefix}-{suffix}"
+                
+                new_tree = TrackedTree(
+                    id_code=unique_code,
+                    gift_id=db_gift.id,
+                    species_id=db_gift.tree_id,
+                    status="unregistered"
+                )
+                db.add(new_tree)
+            db.commit()
+            db.refresh(db_gift)
+
+        pdf_paths = []
+        for tracked_tree in db_gift.tracked_trees:
+            pdf_path = generate_gift_certificate(db_gift, db_gift.tree, tracked_tree)
+            pdf_paths.append(pdf_path)
+
+        db_gift.certificate_url = ",".join(pdf_paths)
         db.commit()
 
         # Send to Recipient
@@ -95,7 +119,7 @@ def update_gift_status(gift_id: int, status_update: GiftStatusUpdate, db: Sessio
             subject=f"Tu regalo botánico de {db_gift.buyer_name} ha llegado",
             gift=db_gift,
             tree_name=tree_name,
-            attachment_path=pdf_path
+            attachment_path=pdf_paths
         )
 
     return db_gift

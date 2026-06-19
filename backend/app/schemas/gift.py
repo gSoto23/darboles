@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import date, datetime
 from app.schemas.tree import TreeSpeciesResponse
+from app.schemas.tracking import TrackedTreeResponse
 
 class GiftBase(BaseModel):
     buyer_name: str
@@ -23,6 +24,7 @@ class GiftBase(BaseModel):
 class GiftRead(GiftBase):
     id: int
     tree: Optional[TreeSpeciesResponse] = None
+    tracked_trees: Optional[list[TrackedTreeResponse]] = []
 
     class Config:
         from_attributes = True

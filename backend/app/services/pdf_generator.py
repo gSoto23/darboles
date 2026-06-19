@@ -5,17 +5,21 @@ from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
+from reportlab.graphics.barcode import qr
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics import renderPDF
 
 # Constants
 OUTPUT_DIR = "/tmp/darboles_certificates"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def generate_gift_certificate(gift, tree_species) -> str:
+def generate_gift_certificate(gift, tree_species, tracked_tree=None) -> str:
     """
     Generates a PDF certificate for a gifted tree using ReportLab.
     Returns the absolute path to the generated PDF.
     """
-    filename = f"certificate_gift_{gift.id}_{datetime.now().timestamp()}.pdf"
+    tree_id_code = tracked_tree.id_code if tracked_tree else "GENERIC"
+    filename = f"certificate_gift_{gift.id}_{tree_id_code}_{datetime.now().timestamp()}.pdf"
     file_path = os.path.join(OUTPUT_DIR, filename)
 
     # Setup Canvas (Landscape mode for certificate look)
@@ -57,7 +61,7 @@ def generate_gift_certificate(gift, tree_species) -> str:
     c.setFillColor(colors.HexColor("#0A0A0A"))
     c.setFont("Helvetica", 14)
     
-    qty = gift.quantity
+    qty = 1 # One certificate per tree as requested
     tree_text = f"{qty} árbol" if qty == 1 else f"{qty} árboles"
     body_1 = f"Es titular y guardián de {tree_text} de la especie"
     body_2 = f"{tree_species.name} ({tree_species.scientific_name})"
@@ -71,13 +75,34 @@ def generate_gift_certificate(gift, tree_species) -> str:
     c.setFillColor(colors.HexColor("#475569"))
     c.drawCentredString(width / 2.0, height / 2.0 - 2.2 * inch, body_3)
 
-    # 7. Signature and Date
+    # 7. Signature, Date and Tracking
     c.setFont("Helvetica", 10)
     c.drawString(1.5 * inch, 1.5 * inch, f"Fecha de Envío: {gift.send_date or datetime.now().strftime('%Y-%m-%d')}")
     c.drawString(1.5 * inch, 1.3 * inch, f"ID de Transacción: {gift.transaction_ref}")
     
-    c.drawRightString(width - 1.5 * inch, 1.5 * inch, "Plataforma Dárboles Costa Rica")
-    c.drawRightString(width - 1.5 * inch, 1.3 * inch, "Operaciones Net-Zero")
+    if tracked_tree:
+        # Dibujar ID del Árbol y QR
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(1.5 * inch, 1.0 * inch, f"ID de Registro: {tracked_tree.id_code}")
+        c.setFont("Helvetica", 10)
+        c.drawString(1.5 * inch, 0.8 * inch, "Escanea el código QR o visita darboles.com/registro")
+        
+        # Generar QR
+        qr_code = qr.QrCodeWidget(f"https://darboles.com/registro?id={tracked_tree.id_code}")
+        bounds = qr_code.getBounds()
+        w = bounds[2] - bounds[0]
+        h = bounds[3] - bounds[1]
+        
+        # Tamaño deseado para el QR: 1.5 inch
+        qr_size = 1.5 * inch
+        d = Drawing(qr_size, qr_size, transform=[qr_size/w, 0, 0, qr_size/h, 0, 0])
+        d.add(qr_code)
+        
+        # Renderizar en la esquina inferior derecha
+        renderPDF.draw(d, c, width - 2.5 * inch, 0.8 * inch)
+
+    c.drawRightString(width - 1.5 * inch, 2.5 * inch, "Plataforma Dárboles Costa Rica")
+    c.drawRightString(width - 1.5 * inch, 2.3 * inch, "Operaciones Net-Zero")
 
     c.showPage()
     c.save()

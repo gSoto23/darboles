@@ -38,4 +38,8 @@ class Gift(Base):
     payment_receipt_method = Column(String, nullable=True) # "upload", "whatsapp"
     created_at = Column(DateTime, default=datetime.utcnow)
     
+    campaign_id = Column(Integer, ForeignKey("campaigns.id"), nullable=True)
+    
     tree = relationship("TreeSpecies")
+    campaign = relationship("Campaign", back_populates="gifts")
+    tracked_trees = relationship("TrackedTree", back_populates="gift")

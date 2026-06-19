@@ -22,9 +22,9 @@ class UserUpdate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
-    full_name: str | None = None
-    whatsapp: str | None = None
-    address: str | None = None
+    full_name: Optional[str] = None
+    whatsapp: Optional[str] = None
+    address: Optional[str] = None
     is_admin: bool = False
     is_superadmin: bool = False
 
