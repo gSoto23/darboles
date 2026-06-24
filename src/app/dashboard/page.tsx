@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [user, setUser] = useState<{ full_name: string, email: string, whatsapp?: string, address?: string } | null>(null);
   const [gifts, setGifts] = useState<GiftData[]>([]);
+  const [plantedTrees, setPlantedTrees] = useState<any[]>([]);
   const [selectedGift, setSelectedGift] = useState<any>(null);
 
   // Profile modal state
@@ -76,6 +77,14 @@ export default function DashboardPage() {
         if (giftsRes.ok) {
           const g = await giftsRes.json();
           setGifts(g);
+        }
+
+        const plantedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/inventory/me/planted`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (plantedRes.ok) {
+          const pt = await plantedRes.json();
+          setPlantedTrees(pt);
         }
       } catch (e) {
         console.error(e);
@@ -164,6 +173,14 @@ export default function DashboardPage() {
     }
   ];
 
+  const plantedColumns = [
+    { key: 'id_code', label: 'Código', render: (row: any) => <strong>{row.id_code}</strong> },
+    { key: 'species_name', label: 'Especie', render: (row: any) => <span>{row.species_name} <br/><small style={{color:'var(--color-muted)'}}>{row.species_scientific_name}</small></span> },
+    { key: 'planted_at', label: 'Fecha de Siembra', render: (row: any) => new Date(row.planted_at + 'Z').toLocaleDateString('es-CR') },
+    { key: 'photo_url', label: 'Foto', render: (row: any) => row.photo_url ? <a href={row.photo_url.startsWith('http') ? row.photo_url : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1').replace('/api/v1', '') + row.photo_url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Ver Foto</a> : <span style={{color:'var(--color-muted)'}}>N/A</span> },
+    { key: 'certificate', label: 'Certificado', render: (row: any) => <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1'}/tracking/${row.id_code}/certificate`} target="_blank" rel="noopener noreferrer" style={{ background: '#0f172a', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600 }}>Descargar PDF</a> }
+  ];
+
   return (
     <div style={{ paddingTop: '100px', minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
       <main className={`page-container slide-up`}>
@@ -188,6 +205,13 @@ export default function DashboardPage() {
           <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-foreground)', fontWeight: 600 }}>Tus Compras / Regalos</h3>
           <SmartTable data={gifts} columns={tableColumns} onRowClick={(row) => setSelectedGift(row)} />
         </div>
+
+        {plantedTrees.length > 0 && (
+          <div style={{ marginTop: '4rem' }}>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-foreground)', fontWeight: 600 }}>Tus Árboles Plantados</h3>
+            <SmartTable data={plantedTrees} columns={plantedColumns} />
+          </div>
+        )}
       </main>
 
       {/* --- PROFILE MODAL --- */}

@@ -4,8 +4,10 @@ from sqlalchemy import func
 from app.core.database import get_db
 from app.models.gift import Gift
 from app.models.tree import TreeSpecies
+from app.models.tracked_tree import TrackedTree
 from app.schemas.inventory import InventoryStats
 from app.schemas.gift import GiftRead
+from app.schemas.tracking import TrackedTreeResponse
 from app.routers.auth import get_current_user
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
@@ -29,3 +31,21 @@ def get_inventory_stats(db: Session = Depends(get_db)):
 @router.get("/me/gifts", response_model=list[GiftRead])
 def get_my_gifts(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     return db.query(Gift).filter(Gift.buyer_email == current_user.email).order_by(Gift.id.desc()).all()
+
+@router.get("/me/planted", response_model=list[TrackedTreeResponse])
+def get_my_planted_trees(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    trees = db.query(TrackedTree).filter(TrackedTree.planter_email == current_user.email).order_by(TrackedTree.planted_at.desc()).all()
+    res = []
+    for tree in trees:
+        res.append({
+            "id_code": tree.id_code,
+            "species_name": tree.species.name,
+            "species_scientific_name": tree.species.scientific_name,
+            "status": tree.status,
+            "planted_at": tree.planted_at,
+            "latitude": tree.latitude,
+            "longitude": tree.longitude,
+            "planter_name": tree.planter_name,
+            "photo_url": tree.photo_url
+        })
+    return res
