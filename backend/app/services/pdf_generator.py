@@ -101,8 +101,6 @@ def generate_gift_certificate(gift, tree_species, tracked_tree=None) -> str:
         # Renderizar en la esquina inferior derecha
         renderPDF.draw(d, c, width - 2.5 * inch, 0.8 * inch)
 
-    c.drawRightString(width - 1.5 * inch, 2.5 * inch, "Plataforma Dárboles Costa Rica")
-    c.drawRightString(width - 1.5 * inch, 2.3 * inch, "Operaciones Net-Zero")
 
     c.showPage()
     c.save()
