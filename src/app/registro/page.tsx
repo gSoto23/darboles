@@ -91,10 +91,14 @@ function RegistroForm() {
       if (res.ok) {
         const data = await res.json();
         setPhotoUrl(data.image_url);
+      } else {
+        alert("La imagen es demasiado pesada o ocurrió un error al subirla. Intenta con una imagen de menor tamaño.");
+        e.target.value = '';
       }
     } catch (err) {
       console.error(err);
-      alert("Error subiendo foto");
+      alert("Error de red al subir la foto.");
+      e.target.value = '';
     }
   };
 
