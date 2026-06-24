@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import styles from './Regalos.module.css';
 import { useTranslations } from '@/context/TranslationContext';
+import imageCompression from 'browser-image-compression';
 
 interface TreeSpecies {
   id: number;
@@ -220,6 +221,26 @@ export default function RegalosPage() {
   const cartTreeTotalCrc = cartItems.reduce((acc, item) => acc + (item.tree.price_crc * item.quantity), 0);
   const cartShippingTotalCrc = cartItems.reduce((acc, item) => acc + (item.shipping_cost_applied || 0), 0);
   const cartTotalCrc = cartTreeTotalCrc + cartShippingTotalCrc;
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setReceiptFile(null);
+      return;
+    }
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+      setReceiptFile(compressedFile);
+    } catch (error) {
+      console.error("Error comprimiendo recibo:", error);
+      setReceiptFile(file); // fallback to original
+    }
+  };
 
   const handleConfirmOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -604,7 +625,7 @@ export default function RegalosPage() {
                                 
                                 {receiptMethod === 'upload' && (
                                   <div style={{ paddingLeft: '1.5rem' }}>
-                                    <input type="file" accept="image/*" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} required style={{ fontSize: '0.8rem', padding: '0.5rem', border: '1px dashed var(--color-border)', width: '100%', borderRadius: '4px' }} />
+                                    <input type="file" accept="image/*" onChange={handleReceiptUpload} required style={{ fontSize: '0.8rem', padding: '0.5rem', border: '1px dashed var(--color-border)', width: '100%', borderRadius: '4px' }} />
                                   </div>
                                 )}
 

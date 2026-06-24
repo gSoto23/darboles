@@ -2,6 +2,9 @@
 
 import { useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useTranslations } from '@/context/TranslationContext';
+import imageCompression from 'browser-image-compression';
 
 function RegistroForm() {
   const searchParams = useSearchParams();
@@ -79,7 +82,21 @@ function RegistroForm() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
+    
+    let file = e.target.files[0];
+    
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      // Compress the image before uploading
+      file = await imageCompression(file, options);
+    } catch (error) {
+      console.error("Error comprimiendo imagen:", error);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     

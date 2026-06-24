@@ -48,7 +48,9 @@ interface Gift {
 }
 
 import Loader from '@/components/Loader';
-import { Toaster, toast } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
+import { useTranslations } from '@/context/TranslationContext';
+import imageCompression from 'browser-image-compression';
 
 const CantonAccordion = ({ gamCantonsStr, onChange }: { gamCantonsStr: string; onChange: (s: string) => void }) => {
   const [locations, setLocations] = useState<{ provincia: string; cantones: string[] }[]>([]);
@@ -298,10 +300,22 @@ export default function AdminDashboard() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    let file = e.target.files[0];
     setIsUploading(true);
+    
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      file = await imageCompression(file, options);
+    } catch (error) {
+      console.error("Error comprimiendo imagen:", error);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     
