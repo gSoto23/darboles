@@ -45,17 +45,4 @@ def get_my_planted_trees(db: Session = Depends(get_db), current_user = Depends(g
         TrackedTree.status == 'planted'
     ).order_by(TrackedTree.planted_at.desc()).all()
     
-    res = []
-    for tree in trees:
-        res.append({
-            "id_code": tree.id_code,
-            "species_name": tree.species.name,
-            "species_scientific_name": tree.species.scientific_name,
-            "status": tree.status,
-            "planted_at": tree.planted_at,
-            "latitude": tree.latitude,
-            "longitude": tree.longitude,
-            "planter_name": tree.planter_name,
-            "photo_url": tree.photo_url
-        })
-    return res
+    return trees
