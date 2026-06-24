@@ -90,3 +90,5 @@ backend/test_emails.py
 tests/
 *.pdf
 *mock*
+check_db.py
+backend/test.db
