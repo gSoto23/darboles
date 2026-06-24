@@ -22,7 +22,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "no-reply@darboles.com")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3001")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://darboles.com")
 
 def send_reset_password_email(to_email: str, token: str):
     reset_link = f"{FRONTEND_URL}/recuperar?token={token}"
