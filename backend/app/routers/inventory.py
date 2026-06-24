@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.core.database import get_db
 from app.models.gift import Gift
 from app.models.tree import TreeSpecies
@@ -34,7 +34,17 @@ def get_my_gifts(db: Session = Depends(get_db), current_user = Depends(get_curre
 
 @router.get("/me/planted", response_model=list[TrackedTreeResponse])
 def get_my_planted_trees(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    trees = db.query(TrackedTree).filter(TrackedTree.planter_email == current_user.email).order_by(TrackedTree.planted_at.desc()).all()
+    user_email = current_user.email.strip().lower()
+    
+    # Busca por planter_email (matriculado) o por recipient_email (recibido por regalo)
+    trees = db.query(TrackedTree).outerjoin(Gift, TrackedTree.gift_id == Gift.id).filter(
+        or_(
+            func.lower(TrackedTree.planter_email) == user_email,
+            func.lower(Gift.recipient_email) == user_email
+        ),
+        TrackedTree.status == 'planted'
+    ).order_by(TrackedTree.planted_at.desc()).all()
+    
     res = []
     for tree in trees:
         res.append({
