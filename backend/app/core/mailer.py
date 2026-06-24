@@ -91,6 +91,25 @@ def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, at
     msg["From"] = SENDER_EMAIL
     msg["To"] = to_email
     
+    tracking_buttons_html = ""
+    tracking_links_plain = ""
+    if hasattr(gift, "tracked_trees") and gift.tracked_trees:
+        tracking_buttons_html += '<div style="margin: 30px 0;">'
+        tracking_links_plain += "Puedes registrar tu árbol y darle seguimiento usando los siguientes enlaces:\n"
+        for idx, tt in enumerate(gift.tracked_trees):
+            btn_text = "Registrar mi Árbol" if len(gift.tracked_trees) == 1 else f"Registrar Árbol {idx+1}"
+            link = f"{FRONTEND_URL}/registro?id={tt.id_code}"
+            tracking_buttons_html += f'<a href="{link}" style="display: inline-block; padding: 12px 24px; background-color: #22c55e; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; margin-right: 10px; margin-bottom: 10px;">{btn_text}</a>'
+            tracking_links_plain += f"- {link}\n"
+        tracking_buttons_html += '</div>'
+
+    text_content = f"Hola {gift.recipient_name},\n\n"
+    text_content += f"{gift.buyer_name} te ha obsequiado un hermoso ejemplar de {tree_name}.\n\n"
+    text_content += f"\"{gift.message or 'Un regalo lleno de vida.'}\"\n\n"
+    text_content += "Adjunto a este correo encontrarás el certificado expedido por Dárboles que conmemora este regalo. Plantaremos y cuidaremos este árbol con la mejor disposición.\n\n"
+    text_content += f"{tracking_links_plain}\n"
+    text_content += "Gracias por hacer crecer los bosques con Dárboles."
+
     html_content = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         {get_logo_html()}
@@ -102,12 +121,18 @@ def send_certificate_email(to_email: str, subject: str, gift, tree_name: str, at
             <p style="margin: 0; color: #475569; font-style: italic;">"{gift.message or 'Un regalo lleno de vida.'}"</p>
         </div>
         
-        <p style="color: #666666; font-size: 16px;">Adjunto a este correo encontrarás el certificado expedido por Dárboles que conmemora este regalo. Plantaremos y cuidaremos este árbol con la mejor disposición.</p>
+        <p style="color: #666666; font-size: 16px;">Adjunto a este correo encontrarás el certificado expedido por Dárboles que conmemora este regalo.</p>
+        
+        {tracking_buttons_html}
         
         <p style="color: #999999; font-size: 14px; margin-top: 40px;">Gracias por hacer crecer los bosques con Dárboles.</p>
     </div>
     """
-    msg.attach(MIMEText(html_content, "html"))
+    
+    body_part = MIMEMultipart("alternative")
+    body_part.attach(MIMEText(text_content, "plain"))
+    body_part.attach(MIMEText(html_content, "html"))
+    msg.attach(body_part)
     
     # Attach PDFs
     attachments = [attachment_path] if isinstance(attachment_path, str) else attachment_path
