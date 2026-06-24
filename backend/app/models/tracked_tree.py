@@ -26,3 +26,11 @@ class TrackedTree(Base):
     
     gift = relationship("Gift", back_populates="tracked_trees")
     species = relationship("TreeSpecies")
+
+    @property
+    def species_name(self):
+        return self.species.name if self.species else "Árbol Desconocido"
+
+    @property
+    def species_scientific_name(self):
+        return self.species.scientific_name if self.species else "Especie Desconocida"
