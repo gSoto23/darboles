@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from app.core.database import get_db
 from app.models.gift import Gift
-from app.models.tree import TreeSpecies
 from app.models.tracked_tree import TrackedTree
 from app.schemas.inventory import InventoryStats
 from app.schemas.gift import GiftRead

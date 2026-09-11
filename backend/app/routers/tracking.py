@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
 from app.core.database import get_db
 from app.models.tracked_tree import TrackedTree
 from app.schemas.tracking import TrackedTreeResponse, TrackedTreeEnroll

@@ -4,14 +4,16 @@ import os
 # Add the backend path so we can import app modules properly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.user import User
 from app.models.tree import TreeSpecies
 from app.models.gift import Gift
-from app.models.config import StoreConfig
-from app.models.campaign import Campaign
-from app.models.tracked_tree import TrackedTree
+# Campaign y TrackedTree no se usan directo en este script, pero deben
+# quedar importados: Gift.campaign / Gift.tracked_trees son relaciones de
+# SQLAlchemy por nombre de clase ("Campaign", "TrackedTree") y necesitan que
+# esas clases ya estén registradas antes de que el mapper de Gift se configure.
+from app.models.campaign import Campaign  # noqa: F401
+from app.models.tracked_tree import TrackedTree  # noqa: F401
 from app.core.security import get_password_hash
 from datetime import date
 

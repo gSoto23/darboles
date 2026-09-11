@@ -8,7 +8,7 @@ from app.models.tree import TreeSpecies
 from app.models.gift import Gift
 from app.schemas.tree import TreeSpeciesCreate, TreeSpeciesResponse, TreeSpeciesUpdate
 from app.schemas.gift import GiftRead, GiftStatusUpdate
-from app.core.mailer import send_order_verified_email, send_order_delivered_email
+from app.core.mailer import send_order_verified_email
 from typing import List
 from datetime import datetime
 

@@ -1,8 +1,6 @@
 import os
 import httpx
-import json
 from fastapi import HTTPException
-from pydantic import BaseModel
 
 TILOPAY_API_URL = "https://app.tilopay.com/api/v1"
 
