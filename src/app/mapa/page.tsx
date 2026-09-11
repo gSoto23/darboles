@@ -11,7 +11,7 @@ export default function MapaPage() {
         <span style={{ display: 'inline-block', background: 'var(--color-accent)', color: 'white', padding: '0.35rem 0.85rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' }}>Trazabilidad Abierta</span>
         <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginBottom: '1rem', letterSpacing: '-0.04em' }}>Impacto Nacional</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '1.15rem', maxWidth: '700px', margin: '0 auto', lineHeight: 1.6 }}>
-          Explora el mapa en tiempo real de todos los árboles plantados por los ciudadanos y organizaciones aliadas. Cada punto verde representa una acción verificable de compensación climática.
+          Explora el mapa en tiempo real de todos los árboles plantados por los ciudadanos y organizaciones aliadas. Cada punto verde representa una acción verificable de compensación climática, registrada con la misma tecnología de georreferenciación que TOMATO usa en sus proyectos institucionales.
         </p>
       </header>
 

@@ -157,7 +157,7 @@ function RegistroForm() {
       {step === 'validate' && (
         <div style={{ background: 'var(--color-surface)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
           <p style={{ color: 'var(--color-muted)', marginBottom: '2rem', textAlign: 'center' }}>
-            Ingresa el código único que viene en tu certificado para registrar tu árbol en el mapa de impacto nacional.
+            Ingresa el código único que viene en tu certificado para registrar tu árbol en el mapa de impacto nacional y convertirte en su Guardián del Ecosistema.
           </p>
           <form onSubmit={handleValidate}>
             <div style={{ marginBottom: '1.5rem' }}>
@@ -228,9 +228,9 @@ function RegistroForm() {
       {step === 'success' && (
         <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
           <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🌳</div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>¡Gracias, {planterName}!</h2>
+          <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>¡Felicidades, {planterName}!</h2>
           <p style={{ color: 'var(--color-muted)', fontSize: '1.1rem', lineHeight: 1.6 }}>
-            Tu árbol ha sido matriculado exitosamente en el registro nacional Dárboles. Su crecimiento ahora sumará a nuestras métricas de captura de carbono.
+            Tu árbol ha sido matriculado exitosamente en el registro nacional Dárboles y ahora sos oficialmente su <strong>Guardián del Ecosistema</strong>. Su crecimiento sumará a nuestras métricas de captura de carbono, y podrás seguir su historia en el mapa.
           </p>
           <a href="/mapa" style={{ display: 'inline-block', marginTop: '2rem', padding: '1rem 2rem', background: 'var(--color-foreground)', color: 'var(--color-background)', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>
             Ver Mapa de Impacto

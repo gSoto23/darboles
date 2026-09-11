@@ -72,6 +72,19 @@ export default function Empresas() {
 
         </section>
 
+        <section className={`slide-up ${styles.card}`} style={{ textAlign: 'center', marginTop: '4rem' }}>
+          <h3 className={styles.cardTitle}>{t("empresas.trust.title")}</h3>
+          <p className={styles.cardText}>{t("empresas.trust.desc")}</p>
+          <a
+            href="https://tomatocr.com/programas/darboles"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-block', marginTop: '0.75rem', color: 'var(--color-foreground)', fontWeight: 600, textDecoration: 'underline' }}
+          >
+            {t("empresas.trust.link")}
+          </a>
+        </section>
+
         <section className={`slide-up ${styles.ctaSection}`}>
           <h2 className={styles.ctaTitle}>{t("empresas.cta.title")}</h2>
           <p className={styles.ctaText}>

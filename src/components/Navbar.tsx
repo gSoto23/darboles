@@ -78,8 +78,9 @@ export default function Navbar() {
         {/* Desktop Links & Mobile Dropdown */}
         <div className={`${styles.links} ${isMobileMenuOpen ? styles.mobileOpen : ''}`}>
           <Link href="/regalos" className={styles.link} onClick={handleLinkClick}>{t("navbar.store")}</Link>
+          <Link href="/empresas" className={styles.link} onClick={handleLinkClick}>{t("navbar.b2b")}</Link>
 
-          <button 
+          <button
             onClick={() => {
               const newLocale = locale === 'es' ? 'en' : 'es';
               setLocale(newLocale);
