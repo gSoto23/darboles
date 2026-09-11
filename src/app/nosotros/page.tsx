@@ -74,6 +74,30 @@ export default function Nosotros() {
           </div>
         </section>
 
+        <section className="slide-up" style={{ marginTop: '8rem', textAlign: 'center' }}>
+          <p style={{
+            fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontStyle: 'italic', fontWeight: 500,
+            maxWidth: '760px', margin: '0 auto', lineHeight: 1.4, color: 'var(--color-foreground)',
+            borderLeft: '3px solid var(--color-foreground)', paddingLeft: '1.5rem', textAlign: 'left'
+          }}>
+            &ldquo;{t("nosotros.anchor")}&rdquo;
+          </p>
+        </section>
+
+        <section className={`slide-up ${styles.manifestoGrid}`} style={{ marginTop: '6rem' }}>
+          <div className={styles.textArea}>
+            <h2 className={styles.sectionTitle}>{t("nosotros.tomato.title")}</h2>
+            <p className={styles.sectionText}>{t("nosotros.tomato.desc")}</p>
+            <a href="https://tomatocr.com" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, textDecoration: 'underline', color: 'var(--color-foreground)' }}>
+              tomatocr.com →
+            </a>
+          </div>
+          <div className={styles.textArea}>
+            <h2 className={styles.sectionTitle}>{t("nosotros.guardian.title")}</h2>
+            <p className={styles.sectionText}>{t("nosotros.guardian.desc")}</p>
+          </div>
+        </section>
+
         <div style={{ marginTop: '8rem', marginBottom: '2rem', textAlign: 'center' }}>
           <h2 style={{ fontSize: '2rem', marginBottom: '2.5rem' }}>Consejos Prácticos de Cuidado</h2>
           <div className={`slide-up`} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', textAlign: 'left' }}>

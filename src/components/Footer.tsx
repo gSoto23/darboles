@@ -12,11 +12,18 @@ export default function Footer() {
         <div>
           <div className={styles.brand}>{t("home.badge")}</div>
           <p className={styles.desc}>{t("footer.desc")}</p>
+          <p className={styles.desc} style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
+            {t("footer.byTomato")}{' '}
+            <a href="https://tomatocr.com" target="_blank" rel="noopener noreferrer" className={styles.link} style={{ textDecoration: 'underline' }}>
+              TOMATO
+            </a>
+          </p>
         </div>
         <div className={styles.links}>
           <div className={styles.linkGroup}>
             <span className={styles.linkTitle}>{t("footer.platform")}</span>
             <Link href="/regalos" className={styles.link}>{t("footer.store")}</Link>
+            <Link href="/empresas" className={styles.link}>{t("footer.b2b")}</Link>
             <Link href="/registro" className={styles.link}>Registrar mi Árbol</Link>
             <Link href="/mapa" className={styles.link}>Mapa de Impacto</Link>
           </div>
