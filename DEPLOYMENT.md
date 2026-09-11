@@ -53,7 +53,17 @@ nano .env
 Ingresa todas las variables críticas (Base de datos, Tilopay, SMTP):
 
 ```env
+# DB_USER/DB_PASSWORD/DB_NAME configuran el contenedor de Postgres (docker-compose.yml).
+# Deben coincidir exactamente con lo que pongas en DATABASE_URL más abajo.
+DB_USER=darboles_user
+DB_PASSWORD=tu_password_seguro
+DB_NAME=darboles_db
 DATABASE_URL=postgresql://darboles_user:tu_password_seguro@db/darboles_db
+
+# Obligatoria: la app ya NO arranca si falta. Generala con:
+#   python -c "import secrets; print(secrets.token_hex(32))"
+SECRET_KEY=...
+
 FOURGEEKS_API_KEY=...
 TILOPAY_USER=...
 TILOPAY_PASSWORD=...
@@ -64,9 +74,19 @@ SMTP_USERNAME=tu_correo
 SMTP_PASSWORD=tu_password
 SENDER_EMAIL=tu_correo
 FRONTEND_URL=https://tudominio.com
+# URL pública del backend (a la que Tilopay redirige al comprador tras pagar).
+# Antes estaba hardcodeada a http://localhost:8001 — con eso el pago con
+# tarjeta no podía completarse en producción.
+BACKEND_URL=https://tudominio.com/api
 ```
 
 Guarda los cambios (`Ctrl+O`, `Enter`, `Ctrl+X`).
+
+> ⚠️ Si ya tenías un `.env` en el servidor con `DB_PASSWORD` distinto al que
+> quedó hardcodeado antes en `docker-compose.yml` (`darboles_password`),
+> agregá `DB_USER`/`DB_PASSWORD`/`DB_NAME` con esos mismos valores para no
+> romper la conexión existente — o planificá una rotación de contraseña real
+> (cambiar el valor en Postgres y en `DATABASE_URL` al mismo tiempo).
 
 ---
 
@@ -199,3 +219,44 @@ npm run build
 pm2 restart darboles-web
 ```
 *(Nota: Recuerda usar `scp` para subir archivos que Git ignora, como el catálogo de imágenes)*
+
+---
+
+## 8. Notas de Seguridad (auditoría sep-2026)
+
+- **`/api/v1/admin/*` y `PUT /api/v1/admin/config`** ahora exigen sesión de
+  admin (`is_admin`). Antes eran públicos — cualquiera podía crear productos,
+  ver todos los pedidos, marcar pedidos como pagados/entregados, o cambiar el
+  número SINPE de cobro. `GET /admin/trees` y `GET /config` siguen públicos a
+  propósito (los usa la tienda `/regalos` sin sesión).
+- **El total del pedido (`/checkout/gift`) ahora se recalcula siempre en el
+  servidor** a partir de `TreeSpecies.price_crc` en base de datos — el
+  `total_amount_crc` que manda el navegador ya es solo informativo, nunca se
+  usa para cobrar.
+- **`SECRET_KEY` es obligatoria** (ver sección 3) — antes tenía un valor por
+  defecto inseguro, deliberadamente diseñado para no verse como un secreto y
+  así no disparar alertas de escaneo (comentario que estaba en el código).
+- **Contraseña de Postgres**: ya no está hardcodeada en `docker-compose.yml`
+  — se lee de `DB_USER`/`DB_PASSWORD`/`DB_NAME` en `.env` (ver sección 3). El
+  puerto de Postgres (5433) ahora solo escucha en `127.0.0.1`, no en la red
+  pública.
+- **Subida de archivos** (imágenes de árbol, comprobantes de pago): se valida
+  tipo de archivo (JPEG/PNG/WebP, +PDF para comprobantes) y tamaño máximo
+  (5 MB), y el nombre en disco siempre se genera en el servidor — nunca se usa
+  el nombre que manda el cliente (evita que alguien escriba fuera de la
+  carpeta de uploads con un nombre tipo `../../algo`).
+- **Stock**: si un pago con tarjeta falla o se cancela, el stock reservado en
+  `/checkout/gift` se restaura automáticamente.
+
+### ⚠️ Pendiente — necesita tu input, no lo inventamos
+
+El callback `GET /tilopay-callback` solo lee los parámetros con los que
+Tilopay redirige el navegador del comprador (`code=1` significa "pagado").
+**No hay verificación server-to-server contra la API de Tilopay ni validación
+de firma/HMAC** — no encontramos en el repo documentación del endpoint o
+formato real de verificación de Tilopay, así que no se implementó una llamada
+a ciegas (podría ser peor que no tener nada). Antes de confiar en este flujo
+para pagos reales con tarjeta, hay que conseguir de Tilopay (soporte o panel
+de comercio) el endpoint de verificación de transacción o el mecanismo de
+firma de su webhook, e implementarlo en `backend/app/routers/payments.py`
+(función `tilopay_callback`).

@@ -9,8 +9,13 @@ interface TreeSpecies {
   scientific_name: string;
   description: string;
   co2_capture_capacity_kg_per_year: number;
-  price_usd: number;
+  price_crc: number;
   image_url: string;
+}
+
+interface StoreConfig {
+  sinpe_number: string;
+  sinpe_name: string;
 }
 
 interface CartItem {
@@ -53,9 +58,11 @@ export default function RegalosPage() {
   const [buyerEmail, setBuyerEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<'sinpe' | 'card'>('sinpe');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/admin/trees`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
+    fetch(`${apiUrl}/admin/trees`)
       .then(res => res.json())
       .then(data => {
         setTrees(data);
@@ -65,6 +72,11 @@ export default function RegalosPage() {
         console.error("Error fetching trees:", err);
         setLoading(false);
       });
+
+    fetch(`${apiUrl}/config`)
+      .then(res => res.json())
+      .then(data => setStoreConfig(data))
+      .catch(err => console.error("Error fetching store config:", err));
   }, []);
 
   const resetConfigForm = () => {
@@ -113,7 +125,7 @@ export default function RegalosPage() {
     setShowCheckout(true);
   };
 
-  const cartTotalUsd = cartItems.reduce((acc, item) => acc + (item.tree.price_usd * item.quantity), 0);
+  const cartTotalCrc = cartItems.reduce((acc, item) => acc + (item.tree.price_crc * item.quantity), 0);
 
   const handleConfirmOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +143,9 @@ export default function RegalosPage() {
           buyer_name: buyerName,
           buyer_email: buyerEmail,
           payment_method: paymentMethod,
-          total_amount_usd: cartTotalUsd,
+          // Informativo únicamente: el backend siempre recalcula el total real
+          // a partir de los precios en base de datos antes de cobrar.
+          total_amount_crc: cartTotalCrc,
           gifts: cartItems.map(item => ({
             tree_id: item.tree.id,
             quantity: item.quantity,
@@ -204,7 +218,7 @@ export default function RegalosPage() {
                   </div>
 
                   <div className={styles.priceRow}>
-                    <div className={styles.price}>${tree.price_usd}</div>
+                    <div className={styles.price}>₡{tree.price_crc.toLocaleString()}</div>
                     <button
                       className={styles.buyBtn}
                       onClick={() => handleStartConfig(tree)}
@@ -223,7 +237,7 @@ export default function RegalosPage() {
       {cartItems.length > 0 && !showCheckout && !configTree && (
         <button className={styles.floatingCartBtn} onClick={openCheckout}>
           <div className={styles.cartBadge}>{cartItems.length}</div>
-          Finalizar Compra (${cartTotalUsd})
+          Finalizar Compra (₡{cartTotalCrc.toLocaleString()})
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
         </button>
       )}
@@ -234,7 +248,7 @@ export default function RegalosPage() {
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Personaliza este Regalo</h3>
-              <div className={styles.modalSubtitle}>Vas a añadir: <strong>{configTree.name}</strong> (${configTree.price_usd} c/u)</div>
+              <div className={styles.modalSubtitle}>Vas a añadir: <strong>{configTree.name}</strong> (₡{configTree.price_crc.toLocaleString()} c/u)</div>
               <button type="button" className={styles.closeBtn} onClick={() => setConfigTree(null)}>×</button>
             </div>
 
@@ -290,7 +304,7 @@ export default function RegalosPage() {
                 <div className={styles.summaryBox}>
                   <div>
                     <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Subtotal</div>
-                    <div className={styles.summaryTotal}>${configTree.price_usd * quantity} USD</div>
+                    <div className={styles.summaryTotal}>₡{(configTree.price_crc * quantity).toLocaleString()}</div>
                   </div>
                   <button type="submit" className={styles.confirmBtn}>
                     Añadir al Carrito
@@ -326,7 +340,7 @@ export default function RegalosPage() {
                           <div className={styles.cartItemSubtitle}>Para: {item.recipientName}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <span className={styles.cartItemPrice}>${item.tree.price_usd * item.quantity}</span>
+                          <span className={styles.cartItemPrice}>₡{(item.tree.price_crc * item.quantity).toLocaleString()}</span>
                           <button type="button" className={styles.deleteBtn} onClick={() => handeRemoveFromCart(item.id)}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                           </button>
@@ -374,11 +388,11 @@ export default function RegalosPage() {
                           <div className={styles.transferBox}>
                             <div className={styles.transferRow}>
                               <span style={{ color: 'var(--color-muted)' }}>Monto a Transferir:</span>
-                              <strong style={{ fontSize: '1.25rem' }}>${cartTotalUsd.toLocaleString()} / ₡{(cartTotalUsd * 515).toLocaleString()}</strong>
+                              <strong style={{ fontSize: '1.25rem' }}>₡{cartTotalCrc.toLocaleString()}</strong>
                             </div>
                             <div className={styles.transferRow}>
                               <span style={{ color: 'var(--color-muted)' }}>SINPE:</span>
-                              <strong>8888-8888</strong>
+                              <strong>{storeConfig ? `${storeConfig.sinpe_number} (${storeConfig.sinpe_name})` : "Cargando..."}</strong>
                             </div>
                           </div>
                         )}
@@ -387,7 +401,7 @@ export default function RegalosPage() {
                       <div className={styles.summaryBox}>
                         <div>
                           <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Gran Total</div>
-                          <div className={styles.summaryTotal}>${cartTotalUsd.toLocaleString()} USD</div>
+                          <div className={styles.summaryTotal}>₡{cartTotalCrc.toLocaleString()}</div>
                         </div>
                         <button type="submit" className={styles.confirmBtn} disabled={isSubmitting}>
                           {isSubmitting ? "Procesando..." : "Confirmar Orden"}

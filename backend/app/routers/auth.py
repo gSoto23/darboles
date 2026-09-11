@@ -67,6 +67,11 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
 
 from app.schemas.user import UserCreate, UserLogin, Token, UserResponse, UserUpdate
 
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+    return current_user
+
 @router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user

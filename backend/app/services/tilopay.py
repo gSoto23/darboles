@@ -6,6 +6,14 @@ from pydantic import BaseModel
 
 TILOPAY_API_URL = "https://app.tilopay.com/api/v1"
 
+def get_backend_callback_url() -> str:
+    """
+    Publicly reachable base URL of this backend, used as the Tilopay redirect target.
+    Must be set via BACKEND_URL in production (e.g. https://darboles.com/api) —
+    defaults to the local dev port so local testing keeps working unconfigured.
+    """
+    return os.getenv("BACKEND_URL", "http://localhost:8001")
+
 def get_tilopay_credentials():
     user = os.getenv("TILOPAY_USER")
     password = os.getenv("TILOPAY_PASSWORD")
@@ -52,8 +60,9 @@ def create_payment_link(txn_ref: str, target_amount_crc: float, buyer_first_name
         "key": key,
         "amount": amount_str,
         "currency": "CRC",
-        "redirect": os.getenv("FRONTEND_URL", "http://localhost:3000") + "/dashboard", # Tilopay directs users here after. We will change this to backend callback. Actually, if backend callback is used, it should be the backend domain. The user said "/dashboard" so let's redirect to frontend /dashboard for now and process payment via frontend, OR we process from Tilopay webhook. But Tilopay expects redirect. Let's use backend API to process then redirect:
-        "redirect": "http://localhost:8001/api/v1/payments/tilopay-callback?txn_ref=" + txn_ref,
+        # Tilopay redirects the buyer's browser here after payment; it must be the
+        # publicly reachable backend URL, not a hardcoded localhost address.
+        "redirect": get_backend_callback_url() + "/api/v1/payments/tilopay-callback?txn_ref=" + txn_ref,
         "billToFirstName": buyer_first_name or "Cliente",
         "billToLastName": buyer_last_name or "Generico",
         "billToAddress": "San Jose",

@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.config import StoreConfig
+from app.models.user import User
+from app.routers.auth import get_current_admin_user
 from pydantic import BaseModel
 from typing import Optional
 
@@ -27,7 +29,7 @@ def get_config(db: Session = Depends(get_db)):
     return config
 
 @router.put("/admin/config", response_model=StoreConfigSchema)
-def update_config(data: StoreConfigSchema, db: Session = Depends(get_db)):
+def update_config(data: StoreConfigSchema, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin_user)):
     config = db.query(StoreConfig).filter(StoreConfig.id == 1).first()
     if not config:
         config = StoreConfig(id=1)

@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from jose import jwt
 
-# Evitamos usar strings largos ilegibles para que los bots (como GitGuardian) no disparen falsos positivos.
-# En producción, esto DEBE venir obligatoriamente del archivo .env oculto.
-SECRET_KEY = os.getenv("SECRET_KEY", "clave-insegura-solo-para-desarrollo-local")
+# Sin valor por defecto a propósito: si falta en el entorno, la app debe fallar
+# al arrancar en vez de firmar tokens con una clave predecible. Generá una con
+# `python -c "import secrets; print(secrets.token_hex(32))"` y ponela en tu .env.
+SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 días
 
