@@ -1,6 +1,4 @@
 import os
-import base64
-import httpx
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -12,7 +10,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse
 from app.services.tilopay import create_payment_link
 
 

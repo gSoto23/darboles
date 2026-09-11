@@ -1,5 +1,4 @@
 import os
-from io import BytesIO
 from datetime import datetime
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
