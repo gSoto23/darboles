@@ -13,12 +13,16 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://darboles.com"),
   title: {
     template: "%s | Darboles",
     default: "Darboles | Reconexión Ambiental",
   },
   description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un árbol con empaques degradables.",
   keywords: ["árboles", "reconexión ambiental", "regalos ecológicos", "sostenibilidad", "costa rica", "medio ambiente", "siembra un árbol"],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Darboles | Reconexión Ambiental",
     description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un árbol.",
@@ -26,10 +30,10 @@ export const metadata: Metadata = {
     siteName: "Darboles",
     images: [
       {
-        url: "/logobk.jpeg",
-        width: 1200,
-        height: 630,
-        alt: "Darboles Regalo de Vida",
+        url: "/background-desktop.jpg",
+        width: 1920,
+        height: 1080,
+        alt: "Cajas Dárboles con árboles recién sembrados",
       },
     ],
     locale: "es_CR",
@@ -39,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Darboles | Reconexión Ambiental",
     description: "Regala vida, siembra un árbol con empaques degradables de Darboles.",
-    images: ["/logobk.jpeg"],
+    images: ["/background-desktop.jpg"],
   },
   icons: {
     icon: [
