@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-WKLXCQQ7E3";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -87,6 +90,20 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${inter.variable} ${outfit.variable}`}>
+      <head>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
+      </head>
       <body>
         <TranslationProvider initialLocale={locale}>
           <ToasterProvider />
