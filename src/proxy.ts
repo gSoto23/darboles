@@ -5,6 +5,14 @@ import type { NextRequest } from 'next/server';
 const SPANISH_SPEAKING_COUNTRIES = ['ES', 'MX', 'CO', 'AR', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'GQ', 'PR'];
 
 export function proxy(request: NextRequest) {
+  // 0. Redirect www.darboles.com to the canonical apex domain (avoids duplicate-content indexing)
+  const host = request.headers.get('host') || '';
+  if (host === 'www.darboles.com') {
+    const url = request.nextUrl.clone();
+    url.host = 'darboles.com';
+    return NextResponse.redirect(url, 308);
+  }
+
   // 1. Extrapolate country from Vercel's geo header if available
   const country = request.headers.get('x-vercel-ip-country') || 'US';
 

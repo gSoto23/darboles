@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-WKLXCQQ7E3";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -13,12 +16,16 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://darboles.com"),
   title: {
     template: "%s | Darboles",
     default: "Darboles | Reconexión Ambiental",
   },
   description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un árbol con empaques degradables.",
   keywords: ["árboles", "reconexión ambiental", "regalos ecológicos", "sostenibilidad", "costa rica", "medio ambiente", "siembra un árbol"],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Darboles | Reconexión Ambiental",
     description: "Plataforma de impacto ambiental y reconexión con la naturaleza. Regala vida, siembra un árbol.",
@@ -26,10 +33,10 @@ export const metadata: Metadata = {
     siteName: "Darboles",
     images: [
       {
-        url: "/logobk.jpeg",
-        width: 1200,
-        height: 630,
-        alt: "Darboles Regalo de Vida",
+        url: "/background-desktop.jpg",
+        width: 1920,
+        height: 1080,
+        alt: "Cajas Dárboles con árboles recién sembrados",
       },
     ],
     locale: "es_CR",
@@ -39,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Darboles | Reconexión Ambiental",
     description: "Regala vida, siembra un árbol con empaques degradables de Darboles.",
-    images: ["/logobk.jpeg"],
+    images: ["/background-desktop.jpg"],
   },
   icons: {
     icon: [
@@ -83,6 +90,20 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${inter.variable} ${outfit.variable}`}>
+      <head>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
+      </head>
       <body>
         <TranslationProvider initialLocale={locale}>
           <ToasterProvider />
