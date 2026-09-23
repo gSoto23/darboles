@@ -6,10 +6,12 @@ const SPANISH_SPEAKING_COUNTRIES = ['ES', 'MX', 'CO', 'AR', 'PE', 'VE', 'CL', 'E
 
 export function proxy(request: NextRequest) {
   // 0. Redirect www.darboles.com to the canonical apex domain (avoids duplicate-content indexing)
+  // Built from scratch (not request.nextUrl.clone()) because behind the nginx reverse proxy,
+  // nextUrl reflects the internal http://localhost:3000 connection, not the public https URL —
+  // cloning it produced a redirect to http://darboles.com:3000, unreachable from the internet.
   const host = request.headers.get('host') || '';
   if (host === 'www.darboles.com') {
-    const url = request.nextUrl.clone();
-    url.host = 'darboles.com';
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, 'https://darboles.com');
     return NextResponse.redirect(url, 308);
   }
 
