@@ -74,6 +74,21 @@ export default function NosotrosClient() {
           </div>
         </section>
 
+        <section className={`slide-up ${styles.manifestoGrid}`} style={{ marginTop: '8rem' }}>
+          <div className={styles.textArea}>
+            <h2 className={styles.sectionTitle}>{t("nosotros.sec3.title")}</h2>
+            <p className={styles.sectionText}>
+              {t("nosotros.sec3.p1")}
+            </p>
+            <p className={styles.sectionText}>
+              {t("nosotros.sec3.p2")}
+            </p>
+          </div>
+          <div className={styles.imagePlaceholder} style={{ background: 'none' }}>
+            <img src="/images/tip-transplant.png" alt="Empaque plantable de Dárboles listo para sembrarse" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '1rem', zIndex: 1 }} />
+          </div>
+        </section>
+
         <section className="slide-up" style={{ marginTop: '8rem', textAlign: 'center' }}>
           <p style={{
             fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontStyle: 'italic', fontWeight: 500,
