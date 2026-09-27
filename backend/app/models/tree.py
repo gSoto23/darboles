@@ -13,3 +13,4 @@ class TreeSpecies(Base):
     image_url = Column(String)
     stock = Column(Integer, default=0, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    is_native = Column(Boolean, default=False, server_default='false', nullable=False)

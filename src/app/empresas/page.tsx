@@ -3,13 +3,13 @@ import EmpresasClient from "./EmpresasClient";
 
 export const metadata: Metadata = {
   title: "Programa Corporativo",
-  description: "Programa corporativo e institucional de Dárboles: inversión ambiental medible y auditable para reportes de sostenibilidad ESG y compensación de emisiones en Costa Rica.",
+  description: "Programa corporativo e institucional de Dárboles: regalo corporativo y reforestación con trazabilidad en Costa Rica: cada árbol registrado en un mapa georreferenciado.",
   alternates: {
     canonical: "/empresas",
   },
   openGraph: {
     title: "Programa Corporativo | Darboles",
-    description: "Programa corporativo e institucional de Dárboles: inversión ambiental medible y auditable para reportes de sostenibilidad ESG y compensación de emisiones en Costa Rica.",
+    description: "Programa corporativo e institucional de Dárboles: regalo corporativo y reforestación con trazabilidad en Costa Rica: cada árbol registrado en un mapa georreferenciado.",
     url: "https://darboles.com/empresas",
     siteName: "Darboles",
     images: [
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Programa Corporativo | Darboles",
-    description: "Programa corporativo e institucional de Dárboles: inversión ambiental medible y auditable para reportes de sostenibilidad ESG y compensación de emisiones en Costa Rica.",
+    description: "Programa corporativo e institucional de Dárboles: regalo corporativo y reforestación con trazabilidad en Costa Rica: cada árbol registrado en un mapa georreferenciado.",
     images: ["/background-desktop.jpg"],
   },
 };

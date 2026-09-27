@@ -40,16 +40,16 @@ def generate_gift_certificate(gift, tree_species, tracked_tree=None) -> str:
     
     c.setFont("Helvetica-Oblique", 14)
     c.setFillColor(colors.HexColor("#666666"))
-    c.drawCentredString(width / 2.0, height - 2.5 * inch, "Infraestructura Tecnológica de Reconexión Ambiental")
+    c.drawCentredString(width / 2.0, height - 2.5 * inch, "Un programa de TOMATO")
 
     # 3. Main Title
     c.setFillColor(colors.HexColor("#0A0A0A"))
     c.setFont("Helvetica-Bold", 28)
-    c.drawCentredString(width / 2.0, height / 2.0 + 1 * inch, "CERTIFICADO DE CONSERVACIÓN")
+    c.drawCentredString(width / 2.0, height / 2.0 + 1 * inch, "CERTIFICADO DE REGALO")
 
     # 4. Body Text
     c.setFont("Helvetica", 14)
-    c.drawCentredString(width / 2.0, height / 2.0 + 0 * inch, "Este documento certifica con carácter perpetuo que:")
+    c.drawCentredString(width / 2.0, height / 2.0 + 0 * inch, "Este certificado acredita que:")
 
     # 5. Recipient Name
     c.setFont("Helvetica-Bold", 32)
@@ -62,9 +62,9 @@ def generate_gift_certificate(gift, tree_species, tracked_tree=None) -> str:
     
     qty = 1 # One certificate per tree as requested
     tree_text = f"{qty} árbol" if qty == 1 else f"{qty} árboles"
-    body_1 = f"Es titular y guardián de {tree_text} de la especie"
+    body_1 = f"Recibió {tree_text} de la especie"
     body_2 = f"{tree_species.name} ({tree_species.scientific_name})"
-    body_3 = f"Un regalo otorgado por {gift.buyer_name} como legado de impacto climático."
+    body_3 = f"Un regalo de {gift.buyer_name}."
     
     c.drawCentredString(width / 2.0, height / 2.0 - 1.4 * inch, body_1)
     c.setFont("Helvetica-Bold", 16)
