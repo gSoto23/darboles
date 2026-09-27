@@ -231,3 +231,56 @@ def send_order_delivered_email(to_email: str, recipient_name: str, tree_name: st
     except Exception as e:
         print(f"Error enviando correo SMTP: {e}")
         return False
+
+LEADS_FALLBACK_EMAILS = os.getenv("LEADS_FALLBACK_EMAILS", "info@tomatocr.com,darbolescr@gmail.com")
+
+LEAD_MOTOR_LABELS = {
+    "regalo_corporativo": "Regalo corporativo",
+    "esg": "Campaña para colaboradores o reforestación",
+}
+
+
+def send_lead_fallback_email(lead: dict, reason: str) -> bool:
+    """Respaldo cuando el CRM de tomatocr.com no recibió la solicitud de una empresa.
+
+    A diferencia de los demás correos, sin SMTP configurado devuelve False en vez de
+    simular el envío: si no, la solicitud se perdería sin que nadie se entere.
+    """
+    recipients = [r.strip() for r in LEADS_FALLBACK_EMAILS.split(",") if r.strip()]
+    if not SMTP_SERVER or not SMTP_USERNAME or not recipients:
+        return False
+
+    body = "\n".join([
+        "Llegó una solicitud de empresa desde darboles.com que NO entró al CRM de tomatocr.com.",
+        f"Motivo: {reason}",
+        "Hay que cargarla a mano en Clientes (origen: darboles.com).",
+        "",
+        f"Nombre: {lead.get('name', '')}",
+        f"Empresa: {lead.get('company') or '-'}",
+        f"Correo: {lead.get('email') or '-'}",
+        f"Teléfono: {lead.get('phone') or '-'}",
+        f"Le interesa: {LEAD_MOTOR_LABELS.get(lead.get('motor'), lead.get('motor'))}",
+        f"Consentimiento: sí (versión {lead.get('consent_text_version', '')})",
+        "",
+        "Mensaje:",
+        lead.get("message") or "-",
+    ])
+
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = f"[darboles.com] Solicitud de empresa: {lead.get('company') or lead.get('name', '')}"
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = ", ".join(recipients)
+    if lead.get("email"):
+        msg["Reply-To"] = lead["email"]
+
+    try:
+        from smtplib import SMTP
+        server = SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, recipients, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error enviando respaldo de solicitud de empresa: {type(e).__name__}")
+        return False

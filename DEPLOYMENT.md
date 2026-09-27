@@ -86,6 +86,20 @@ FRONTEND_URL=https://tudominio.com
 # al final si Nginx reenvía /api/v1/... al backend tal cual (como en darboles.com).
 # Comprobalo: https://tudominio.com/api/v1/health debe responder {"status":"ok"}.
 BACKEND_URL=https://tudominio.com
+
+# Formulario de empresas → CRM de tomatocr.com (docs/INTEGRACION_TOMATOCR.md).
+# La clave es la misma que DARBOLES_API_KEY en el .env de tomatocr.com y vive
+# SOLO aquí (nunca en NEXT_PUBLIC_* ni en el repo). Sin URL o sin clave, cada
+# solicitud se manda por el correo de respaldo.
+TOMATO_CRM_URL=https://tomatocr.com/api/crm/leads
+TOMATO_CRM_API_KEY=...
+# A quién llega la solicitud si tomatocr.com no la recibe (503, 5xx, 401, 429 o
+# más de 10 s). Necesita SMTP_* configurado: sin SMTP el respaldo NO se simula,
+# falla y la persona ve un aviso para escribir por WhatsApp.
+LEADS_FALLBACK_EMAILS=info@tomatocr.com,darbolescr@gmail.com
+# Límite del formulario (opcionales; estos son los valores por defecto)
+LEADS_PER_IP_PER_HOUR=5
+LEADS_PER_HOUR=60
 ```
 
 Guarda los cambios (`Ctrl+O`, `Enter`, `Ctrl+X`).
@@ -250,6 +264,8 @@ Si solo cambiaste el `.env`:
 - `NEXT_PUBLIC_API_URL`: `npm run build && pm2 restart darboles-web`.
 - Cambiar `SECRET_KEY` cierra todas las sesiones abiertas; es normal que todos deban volver a iniciar sesión.
 
+Las variables del formulario de empresas (`TOMATO_CRM_*`, `LEADS_*`) también son del backend: `sudo docker compose up -d backend`.
+
 Las imágenes de `backend/uploads/` no se tocan en este proceso: viven en el servidor gracias al volumen (ver sección 4).
 
 ### Si algo sale mal (rollback)
@@ -292,6 +308,14 @@ cat ~/backup_darboles_FECHA.sql | sudo docker compose exec -T db psql -U darbole
   carpeta de uploads con un nombre tipo `../../algo`).
 - **Stock**: si un pago con tarjeta falla o se cancela, el stock reservado en
   `/checkout/gift` se restaura automáticamente.
+
+### Formulario de empresas (CRM de tomatocr.com)
+
+- **Activar:** generar la clave con `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`, ponerla como `DARBOLES_API_KEY` en tomatocr.com (`sudo systemctl restart tomato`) y como `TOMATO_CRM_API_KEY` aquí, junto con `TOMATO_CRM_URL`; luego `sudo docker compose up -d backend`.
+- **Comprobar:** `sudo docker compose logs backend | grep "solicitud de empresa"` muestra cada envío (sin datos personales). Un `401` en el log significa que las dos claves no coinciden.
+- **Si la clave se filtra:** generar otra y cambiarla en los dos `.env` al mismo tiempo.
+- **IP real:** el límite por IP usa `X-Real-IP`, que pone Nginx (`proxy_set_header X-Real-IP $remote_addr;` en `location /api/`). Solo se cree en ese encabezado cuando la conexión llega desde el propio servidor.
+- **Límite en memoria:** se reinicia con cada deploy del backend; el backend debe seguir corriendo con un solo proceso de Uvicorn.
 
 ### ⚠️ Pendiente — necesita tu input, no lo inventamos
 

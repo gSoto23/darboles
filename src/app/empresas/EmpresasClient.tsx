@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import styles from './Empresas.module.css';
 import { useTranslations } from '@/context/TranslationContext';
+import CompanyLeadForm from '@/components/CompanyLeadForm';
 
 export default function EmpresasClient() {
   const { t } = useTranslations();
@@ -90,9 +90,13 @@ export default function EmpresasClient() {
           <p className={styles.ctaText}>
             {t("empresas.cta.desc")}
           </p>
-          <Link href="/contacto" className={styles.ctaButton}>
+          <a href="#cotizar" className={styles.ctaButton}>
             {t("empresas.cta.btn")}
-          </Link>
+          </a>
+        </section>
+
+        <section className="slide-up" style={{ marginTop: '4rem' }}>
+          <CompanyLeadForm variant="empresas" />
         </section>
 
       </main>

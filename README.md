@@ -14,7 +14,7 @@ Para producción, ver **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 - Next.js 16 (App Router, Turbopack), React 19 y TypeScript. Leer `AGENTS.md` antes de tocar código Next.
 - CSS Modules y estilos en línea; `react-hot-toast` para notificaciones.
 - Leaflet y `react-leaflet` para el mapa público y el selector de ubicación.
-- Textos en español ("tú") e inglés, en `src/locales/es.json` y `src/locales/en.json`, mediante `useTranslations()`.
+- Textos en español ("tú"; el formulario de empresas, en voseo) e inglés, en `src/locales/es.json` y `src/locales/en.json`, mediante `useTranslations()`.
 
 **Backend**
 - Python 3.11 y FastAPI; SQLAlchemy y Alembic sobre PostgreSQL 15.
@@ -33,6 +33,7 @@ Para producción, ver **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 | Registro del Guardián (`/registro`) | La persona valida su código, marca en el mapa dónde sembró (con GPS opcional), la fecha y una foto. Solo acepta ubicaciones dentro de Costa Rica. | `src/app/registro`, `backend/app/routers/tracking.py` |
 | Mapa (`/mapa`) | Árboles sembrados por origen: verde para Guardianes, naranja para proyectos ejecutados por TOMATO. | `src/app/mapa` |
 | Admin (`/admin`) | Pedidos, catálogo de especies (con la marca "Nativo de Costa Rica", que solo se activa con confirmación del ingeniero forestal), árboles sembrados (alta manual o CSV), configuración de tienda y usuarios. | `src/app/admin`, `backend/app/routers/admin*.py` |
+| Formulario de empresas | En `/empresas` y `/contacto`. El navegador envía a `POST /api/v1/leads/empresas`; el backend valida, filtra bots (honeypot y límite por IP) y reenvía al CRM de tomatocr.com de servidor a servidor. Si tomatocr.com no responde, va por correo de respaldo. Textos en voseo (es un formulario de TOMATO). Ver [docs/INTEGRACION_TOMATOCR.md](docs/INTEGRACION_TOMATOCR.md). | `src/components/CompanyLeadForm.tsx`, `backend/app/routers/leads.py`, `backend/app/services/tomato_crm.py` |
 | Contenido | Inicio, `/nosotros`, `/empresas`, `/contacto`, `/terminos`, `/privacidad`. | `src/app/*`, `src/locales/*` |
 
 **Roles:** usuario, administrador (`is_admin`) y superadministrador (`is_superadmin`). Todas las rutas `/api/v1/admin/*` exigen sesión de administrador, salvo `GET /admin/trees` y `GET /config`, que usa la tienda sin sesión.
@@ -59,15 +60,17 @@ darboles/
 │   ├── app/
 │   │   ├── core/                 # database, security (JWT), mailer, uploads (validación de imágenes)
 │   │   ├── models/               # user, tree, gift, tracked_tree, campaign, config
-│   │   ├── routers/              # auth, admin, admin_tracking, admin_users, payments, tracking, inventory, config
+│   │   ├── routers/              # auth, admin, admin_tracking, admin_users, leads, payments, tracking, inventory, config
 │   │   ├── schemas/
-│   │   ├── services/             # pdf_generator, tilopay
+│   │   ├── services/             # pdf_generator, tilopay, tomato_crm
 │   │   ├── seed.py               # Datos iniciales (especies y usuarios base)
 │   │   └── main.py               # Punto de entrada FastAPI
+│   ├── tests/                    # Pruebas (pytest)
 │   ├── uploads/                  # Imágenes subidas (ignorada por git; volumen en Docker)
 │   └── Dockerfile
 ├── scripts/send_reminders.py     # Recordatorio por correo a Guardianes que aún no lo recibieron
 ├── docker-compose.yml            # db (Postgres) + backend (FastAPI)
+├── docs/INTEGRACION_TOMATOCR.md  # Contrato con el CRM de tomatocr.com
 ├── DEPLOYMENT.md                 # Servidor, variables de entorno, redeploy y rollback
 └── doc_tilopay.md                # Integración con Tilopay
 ```
@@ -115,6 +118,14 @@ npm run dev
 Queda en `http://localhost:3000`.
 
 ### 4. Comprobaciones antes de hacer commit
+Pruebas del backend (no salen a la red ni mandan correos):
+```bash
+cd backend && venv/bin/pip install -r requirements-dev.txt
+```
+```bash
+cd backend && venv/bin/python -m pytest -q
+```
+Frontend:
 ```bash
 npx tsc --noEmit
 ```
