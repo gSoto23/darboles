@@ -14,6 +14,7 @@ interface TreeSpecies {
   image_url: string;
   stock: number;
   is_active: boolean;
+  is_native: boolean;
 }
 
 interface Gift {
@@ -169,7 +170,7 @@ export default function AdminDashboard() {
   const [speciesForm, setSpeciesForm] = useState({
     name: '', scientific_name: '', price_crc: 0,
     description: '', co2_capture_capacity_kg_per_year: 0, image_url: '',
-    stock: 0, is_active: true
+    stock: 0, is_active: true, is_native: false
   });
   const [isUploading, setIsUploading] = useState(false);
 
@@ -263,11 +264,12 @@ export default function AdminDashboard() {
         co2_capture_capacity_kg_per_year: species.co2_capture_capacity_kg_per_year || 0,
         image_url: species.image_url || '',
         stock: species.stock,
-        is_active: species.is_active
+        is_active: species.is_active,
+        is_native: species.is_native
       });
     } else {
       setEditingSpeciesId(null);
-      setSpeciesForm({ name: '', scientific_name: '', price_crc: 0, description: '', co2_capture_capacity_kg_per_year: 0, image_url: '', stock: 0, is_active: true });
+      setSpeciesForm({ name: '', scientific_name: '', price_crc: 0, description: '', co2_capture_capacity_kg_per_year: 0, image_url: '', stock: 0, is_active: true, is_native: false });
     }
     setIsSpeciesModalOpen(true);
   };
@@ -694,6 +696,11 @@ export default function AdminDashboard() {
                   <input type="checkbox" id="is_active" checked={speciesForm.is_active} onChange={(e) => setSpeciesForm({...speciesForm, is_active: e.target.checked})} style={{ width: '18px', height: '18px' }} />
                   <label htmlFor="is_active" style={{ fontSize: '0.9rem', color: 'var(--color-foreground)', cursor: 'pointer' }}>Especie Pública y Activa</label>
                 </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="checkbox" id="is_native" checked={speciesForm.is_native} onChange={(e) => setSpeciesForm({...speciesForm, is_native: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                <label htmlFor="is_native" style={{ fontSize: '0.9rem', color: 'var(--color-foreground)', cursor: 'pointer' }}>Nativo de Costa Rica (solo con confirmación del ingeniero forestal)</label>
               </div>
 
               <button type="submit" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer' }}>Guardar Especie</button>

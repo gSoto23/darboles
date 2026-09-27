@@ -108,7 +108,7 @@
   flex: 1;
 }
 
-.metrics {
+.nativeBadge {
   display: flex;
   align-items: center;
   gap: 0.5rem;

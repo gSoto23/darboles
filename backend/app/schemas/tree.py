@@ -10,6 +10,7 @@ class TreeSpeciesBase(BaseModel):
     image_url: Optional[str] = None
     stock: int = 0
     is_active: bool = True
+    is_native: bool = False
 
 class TreeSpeciesCreate(TreeSpeciesBase):
     pass
@@ -23,6 +24,7 @@ class TreeSpeciesUpdate(BaseModel):
     image_url: Optional[str] = None
     stock: Optional[int] = None
     is_active: Optional[bool] = None
+    is_native: Optional[bool] = None
 
 class TreeSpeciesResponse(TreeSpeciesBase):
     id: int
