@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.routers import auth, admin, admin_tracking, payments, tracking, inventory, admin_users, config
+from app.routers import auth, admin, admin_tracking, leads, payments, tracking, inventory, admin_users, config
 from app.models import user, tree, gift, config as config_model, campaign, tracked_tree
 # from app.core.scheduler import start_scheduler
 from fastapi.staticfiles import StaticFiles
@@ -45,6 +45,7 @@ app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(admin_tracking.router, prefix="/api/v1/admin/tracking", tags=["Admin Tracking"])
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["Payments"])
 app.include_router(tracking.router, prefix="/api/v1/tracking", tags=["Tracking"])
+app.include_router(leads.router, prefix="/api/v1", tags=["Leads"])
 app.include_router(inventory.router, prefix="/api/v1", tags=["Inventory"])
 app.include_router(admin_users.router, prefix="/api/v1", tags=["Admin Users"])
 app.include_router(config.router)

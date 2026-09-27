@@ -14,7 +14,7 @@ export default function Privacidad() {
         
         <div style={{ color: 'var(--color-muted)', fontSize: '1.125rem', lineHeight: '1.8' }}>
           <p style={{ marginBottom: '1.5rem' }}>
-            {t("priv.last_upd")} {new Date().getFullYear()}
+            {t("priv.last_upd")}
           </p>
           
           <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("priv.sec1.title")}</h2>
@@ -35,6 +35,11 @@ export default function Privacidad() {
           <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("priv.sec4.title")}</h2>
           <p style={{ marginBottom: '1.5rem' }}>
             {t("priv.sec4.p")}
+          </p>
+
+          <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("priv.sec5.title")}</h2>
+          <p style={{ marginBottom: '1.5rem' }}>
+            {t("priv.sec5.p")}
           </p>
         </div>
       </main>

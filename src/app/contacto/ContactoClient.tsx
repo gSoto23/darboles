@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from '@/context/TranslationContext';
+import CompanyLeadForm from '@/components/CompanyLeadForm';
 
 export default function ContactoClient() {
   const { t } = useTranslations();
@@ -33,6 +34,10 @@ export default function ContactoClient() {
             <p style={{ color: 'var(--color-muted)', fontSize: '1.1rem' }}>darbolescr@gmail.com</p>
           </a>
 
+        </section>
+
+        <section className="slide-up" style={{ marginTop: '4rem', animationDelay: '0.2s' }}>
+          <CompanyLeadForm variant="contacto" />
         </section>
 
       </main>

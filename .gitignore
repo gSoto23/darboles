@@ -88,6 +88,8 @@ backend/uploads/
 preview_correo.html
 backend/test_emails.py
 tests/
+# Las pruebas automáticas del backend sí van al repo
+!backend/tests/
 *.pdf
 *mock*
 check_db.py
