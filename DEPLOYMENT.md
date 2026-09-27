@@ -77,7 +77,10 @@ FRONTEND_URL=https://tudominio.com
 # URL pública del backend (a la que Tilopay redirige al comprador tras pagar).
 # Antes estaba hardcodeada a http://localhost:8001 — con eso el pago con
 # tarjeta no podía completarse en producción.
-BACKEND_URL=https://tudominio.com/api
+# El código le agrega "/api/v1/payments/tilopay-callback", así que va SIN "/api"
+# al final si Nginx reenvía /api/v1/... al backend tal cual (como en darboles.com).
+# Comprobalo: https://tudominio.com/api/v1/health debe responder {"status":"ok"}.
+BACKEND_URL=https://tudominio.com
 ```
 
 Guarda los cambios (`Ctrl+O`, `Enter`, `Ctrl+X`).
