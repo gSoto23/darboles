@@ -64,15 +64,20 @@ DATABASE_URL=postgresql://darboles_user:tu_password_seguro@db/darboles_db
 #   python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=...
 
-FOURGEEKS_API_KEY=...
+# URL pública de la API que usa el navegador. Next.js la lee al COMPILAR
+# (npm run build): si la cambias, vuelve a compilar el frontend.
+NEXT_PUBLIC_API_URL=https://tudominio.com/api/v1
+
 TILOPAY_USER=...
 TILOPAY_PASSWORD=...
 TILOPAY_KEY=...
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=tu_correo
-SMTP_PASSWORD=tu_password
+SMTP_PASSWORD=tu_password   # En Gmail: contraseña de aplicación, no la de la cuenta
 SENDER_EMAIL=tu_correo
+# A donde vuelve el comprador después de pagar con tarjeta y la base de los
+# enlaces en los correos. Sin ella, el retorno de Tilopay apunta a localhost:3000.
 FRONTEND_URL=https://tudominio.com
 # URL pública del backend (a la que Tilopay redirige al comprador tras pagar).
 # Antes estaba hardcodeada a http://localhost:8001 — con eso el pago con
@@ -176,9 +181,10 @@ Agrega esta configuración básica:
 server {
     server_name tudominio.com www.tudominio.com;
 
-    # Enviar tráfico del Backend al puerto 8001
+    # Enviar tráfico del Backend al puerto 8001. Sin "/" al final de proxy_pass:
+    # el backend espera la ruta completa (/api/v1/..., /api/uploads/...).
     location /api/ {
-        proxy_pass http://localhost:8001/;
+        proxy_pass http://localhost:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -238,6 +244,11 @@ npm install
 npm run build
 pm2 restart darboles-web
 ```
+
+Si solo cambiaste el `.env`:
+- Variables del backend (`SECRET_KEY`, `SMTP_*`, `TILOPAY_*`, `FRONTEND_URL`, `BACKEND_URL`): `sudo docker compose up -d backend` para recrear el contenedor con los valores nuevos.
+- `NEXT_PUBLIC_API_URL`: `npm run build && pm2 restart darboles-web`.
+- Cambiar `SECRET_KEY` cierra todas las sesiones abiertas; es normal que todos deban volver a iniciar sesión.
 
 Las imágenes de `backend/uploads/` no se tocan en este proceso: viven en el servidor gracias al volumen (ver sección 4).
 
