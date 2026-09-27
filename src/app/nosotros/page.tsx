@@ -3,13 +3,13 @@ import NosotrosClient from "./NosotrosClient";
 
 export const metadata: Metadata = {
   title: "Sobre Dárboles",
-  description: "Dárboles: regalá un árbol vivo en un empaque 100% plantable — no se desempaca, se siembra completo y se desintegra orgánicamente en la tierra.",
+  description: "Dárboles: regala un árbol vivo en un empaque 100% plantable — no se desempaca, se siembra completo y se desintegra orgánicamente en la tierra.",
   alternates: {
     canonical: "/nosotros",
   },
   openGraph: {
     title: "Sobre Dárboles | Darboles",
-    description: "Dárboles: regalá un árbol vivo en un empaque 100% plantable — no se desempaca, se siembra completo y se desintegra orgánicamente en la tierra.",
+    description: "Dárboles: regala un árbol vivo en un empaque 100% plantable — no se desempaca, se siembra completo y se desintegra orgánicamente en la tierra.",
     url: "https://darboles.com/nosotros",
     siteName: "Darboles",
     images: [
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Sobre Dárboles | Darboles",
-    description: "Dárboles: regalá un árbol vivo en un empaque 100% plantable — no se desempaca, se siembra completo y se desintegra orgánicamente en la tierra.",
+    description: "Dárboles: regala un árbol vivo en un empaque 100% plantable — no se desempaca, se siembra completo y se desintegra orgánicamente en la tierra.",
     images: ["/background-desktop.jpg"],
   },
 };

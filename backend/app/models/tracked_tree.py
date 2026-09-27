@@ -13,6 +13,9 @@ class TrackedTree(Base):
     species_id = Column(Integer, ForeignKey("tree_species.id"))
     
     status = Column(String, default="unregistered") # unregistered, planted, dead
+    # guardian: lo registró la persona que recibió el árbol; tomato: proyecto ejecutado por TOMATO
+    origin = Column(String, default="guardian", server_default="guardian", nullable=False)
+    project_name = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     
