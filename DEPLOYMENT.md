@@ -312,7 +312,19 @@ cat ~/backup_darboles_FECHA.sql | sudo docker compose exec -T db psql -U darbole
 ### Formulario de empresas (CRM de tomatocr.com)
 
 - **Activar:** generar la clave con `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`, ponerla como `DARBOLES_API_KEY` en tomatocr.com (`sudo systemctl restart tomato`) y como `TOMATO_CRM_API_KEY` aquí, junto con `TOMATO_CRM_URL`; luego `sudo docker compose up -d backend`.
-- **Comprobar:** `sudo docker compose logs backend | grep "solicitud de empresa"` muestra cada envío (sin datos personales). Un `401` en el log significa que las dos claves no coinciden.
+- **Comprobar:** `sudo docker compose logs backend | grep "solicitud de empresa"` muestra cada envío (sin datos personales): `enviada al CRM` es lo normal; `enviada por correo de respaldo … motivo=…` dice por qué no entró.
+- **Si el motivo es `401` (las claves no coinciden):** comparar la clave que ve cada aplicación sin mostrarla, con su largo y una huella. Las dos líneas deben ser idénticas (43 caracteres para una clave de `token_urlsafe(32)`); el primer y último carácter delatan comillas o espacios pegados.
+
+  En el servidor de darboles.com:
+  ```bash
+  cd ~/darboles && sudo docker compose exec backend python -c "import os,hashlib;k=os.environ.get('TOMATO_CRM_API_KEY','');print(len(k), hashlib.sha256(k.encode()).hexdigest()[:12], repr(k[:1]), repr(k[-1:]))"
+  ```
+  En el servidor de tomatocr.com (su entorno de producción está en `.venv`, con punto):
+  ```bash
+  cd /home/ubuntu/tomatocr && .venv/bin/python -c "from app.core.config import settings;import hashlib;k=settings.DARBOLES_API_KEY;print(len(k), hashlib.sha256(k.encode()).hexdigest()[:12], repr(k[:1]), repr(k[-1:]))"
+  ```
+  Ese comando lee el `.env`, no el servicio en marcha: después de corregir la clave hay que reiniciar (`sudo systemctl restart tomato`, unos 40 s) o seguirá respondiendo `401`. En darboles.com, un cambio de clave se aplica con `sudo docker compose up -d backend` (`restart` no vuelve a leer el `.env`).
+- **Otros motivos:** `503` = tomatocr.com no tiene `DARBOLES_API_KEY` o no se reinició; `CRM sin configurar` = faltan `TOMATO_CRM_URL`/`TOMATO_CRM_API_KEY` aquí o no se recreó el contenedor; `no respondió en 10 s` / `sin conexión` = tomatocr.com caído.
 - **Si la clave se filtra:** generar otra y cambiarla en los dos `.env` al mismo tiempo.
 - **IP real:** el límite por IP usa `X-Real-IP`, que pone Nginx (`proxy_set_header X-Real-IP $remote_addr;` en `location /api/`). Solo se cree en ese encabezado cuando la conexión llega desde el propio servidor.
 - **Límite en memoria:** se reinicia con cada deploy del backend; el backend debe seguir corriendo con un solo proceso de Uvicorn.

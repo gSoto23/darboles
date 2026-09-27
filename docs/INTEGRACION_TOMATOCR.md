@@ -80,4 +80,17 @@ Ver [DEPLOYMENT.md §3](../DEPLOYMENT.md#3-configuración-de-variables-de-entorn
 ## QA en producción
 
 Después de activar: un envío de prueba desde darboles.com/empresas, revisar en
-tomatocr.com → Clientes que llegó con origen "darboles.com" y borrarlo.
+tomatocr.com → Clientes que llegó con origen "darboles.com" y descartarlo.
+Cada envío genera un aviso por correo de tomatocr.com al vendedor asignado y a
+info@tomatocr.com; si cae en el respaldo, llega además el correo de respaldo.
+
+Registro:
+
+- **27/09/2026 — activado.** Primer envío de prueba: respaldo por `401` (las
+  claves de los dos `.env` no coincidían; la de tomatocr.com tenía 44
+  caracteres). Se igualaron las claves, se reinició tomatocr.com y el segundo
+  envío entró al CRM (`enviada al CRM`). La prueba se descartó en Clientes.
+  Quedaron comprobados en producción el envío al CRM, el correo de respaldo, la
+  validación (422) y el evento GA4 `generate_lead`.
+
+Para diagnosticar un `401`, ver DEPLOYMENT.md §8 → "Formulario de empresas".
