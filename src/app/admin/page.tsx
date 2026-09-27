@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import styles from './Admin.module.css';
 import SmartTable from '@/components/SmartTable';
+import PlantedTreesTab from './PlantedTreesTab';
 
 interface TreeSpecies {
   id: number;
@@ -151,7 +152,7 @@ const CantonAccordion = ({ gamCantonsStr, onChange }: { gamCantonsStr: string; o
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'pedidos' | 'catalogo' | 'usuarios' | 'configuracion'>('pedidos');
+  const [activeTab, setActiveTab] = useState<'pedidos' | 'catalogo' | 'sembrados' | 'usuarios' | 'configuracion'>('pedidos');
   const [storeConfig, setStoreConfig] = useState<any>(null);
   const [trees, setTrees] = useState<TreeSpecies[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
@@ -413,6 +414,12 @@ export default function AdminDashboard() {
           Catálogo de Árboles
         </button>
         <button 
+          className={`${styles.navItem} ${activeTab === 'sembrados' ? styles.active : ''}`}
+          onClick={() => setActiveTab('sembrados')}
+        >
+          Árboles Sembrados
+        </button>
+        <button 
           className={`${styles.navItem} ${activeTab === 'configuracion' ? styles.active : ''}`}
           onClick={() => setActiveTab('configuracion')}
         >
@@ -434,6 +441,7 @@ export default function AdminDashboard() {
             <h1 className={styles.title}>
               {activeTab === 'pedidos' && 'Gestor de Entregas y Checkout'}
               {activeTab === 'catalogo' && 'Control de Especies e Inventario'}
+              {activeTab === 'sembrados' && 'Árboles Sembrados y Mapa'}
               {activeTab === 'usuarios' && 'Sistema de Roles y Accesos MAESTRO'}
               {activeTab === 'configuracion' && 'Ajustes de Tienda y Logística'}
             </h1>
@@ -532,6 +540,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
+
+        {activeTab === 'sembrados' && <PlantedTreesTab />}
 
         {activeTab === 'usuarios' && isSuperAdmin && (
           <div className="slide-up">

@@ -3,6 +3,8 @@
 import React from 'react';
 import { useTranslations } from '@/context/TranslationContext';
 
+const SECTION_COUNT = 11;
+
 export default function Terminos() {
   const { t } = useTranslations();
   return (
@@ -14,28 +16,17 @@ export default function Terminos() {
         
         <div style={{ color: 'var(--color-muted)', fontSize: '1.125rem', lineHeight: '1.8' }}>
           <p style={{ marginBottom: '1.5rem' }}>
-            {t("terms.last_upd")} {new Date().getFullYear()}
-          </p>
-          
-          <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("terms.sec1.title")}</h2>
-          <p style={{ marginBottom: '1.5rem' }}>
-            {t("terms.sec1.p")}
+            {t("terms.last_upd")}
           </p>
 
-          <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("terms.sec2.title")}</h2>
-          <p style={{ marginBottom: '1.5rem' }}>
-            {t("terms.sec2.p")}
-          </p>
-
-          <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("terms.sec3.title")}</h2>
-          <p style={{ marginBottom: '1.5rem' }}>
-            {t("terms.sec3.p")}
-          </p>
-
-          <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t("terms.sec4.title")}</h2>
-          <p style={{ marginBottom: '1.5rem' }}>
-            {t("terms.sec4.p")}
-          </p>
+          {Array.from({ length: SECTION_COUNT }, (_, i) => i + 1).map(n => (
+            <section key={n}>
+              <h2 style={{ color: 'var(--color-foreground)', marginTop: '2.5rem', marginBottom: '1rem', fontSize: '1.5rem' }}>{t(`terms.sec${n}.title`)}</h2>
+              <p style={{ marginBottom: '1.5rem' }}>
+                {t(`terms.sec${n}.p`)}
+              </p>
+            </section>
+          ))}
         </div>
       </main>
     </div>
