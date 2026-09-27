@@ -26,6 +26,10 @@ services:
       - "8001:8000"
     env_file:
       - .env
+    volumes:
+      # Las fotos de Guardianes y de especies que se suben en producción viven en el
+      # servidor, no dentro del contenedor: así sobreviven a cada `up --build`.
+      - ./backend/uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy

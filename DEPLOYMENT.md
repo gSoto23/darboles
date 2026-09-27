@@ -92,13 +92,21 @@ Si tienes un archivo para poblar tu base de datos (por ejemplo, `seed.py`), debe
 sudo docker compose exec backend python app/seed.py
 ```
 
-### Subir archivos ignorados por Git
-¡Atención! Carpetas como `backend/uploads/` (donde se guardan imágenes) suelen estar ignoradas en tu archivo `.gitignore` por seguridad y no llegarán al servidor con `git pull`. Debes copiarlas manualmente desde tu computadora local usando `scp`:
+### Imágenes subidas (`backend/uploads/`)
+`backend/uploads/` está en `.gitignore`, así que no llega al servidor con `git pull`. El contenedor del backend la monta como volumen (`./backend/uploads:/app/uploads` en `docker-compose.yml`): todo lo que se sube en producción (fotos de Guardianes, imágenes de especies) se guarda en esa carpeta del servidor y no se pierde al reconstruir el contenedor.
+
+En la primera instalación, copia el catálogo de imágenes desde tu computadora con `scp`:
 
 En la terminal de tu computadora (Mac/PC local):
 ```bash
 scp -i /ruta/a/tu/llave.pem -r /ruta/local/a/darboles/backend/uploads/ ubuntu@IP_DEL_SERVIDOR:~/darboles/backend/
 ```
+
+> ⚠️ **Si tu servidor ya corría una versión sin este volumen**, las imágenes subidas en producción están *dentro* del contenedor actual. Antes del primer `docker compose up -d --build` con esta versión, sácalas al servidor, o el volumen (vacío o desactualizado) las va a tapar:
+> ```bash
+> sudo docker compose cp backend:/app/uploads ./backend/
+> ```
+> Solo hace falta esta vez; después del cambio ya viven en `backend/uploads/` del servidor.
 
 ---
 
@@ -150,7 +158,7 @@ server {
         proxy_pass http://localhost:8001/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_addrs;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
     # Enviar el resto del tráfico web al Frontend en el puerto 3000
@@ -185,17 +193,41 @@ Cuando hagas cambios en tu código local, uses `git push` y quieras que esos cam
 
 ```bash
 cd ~/darboles
+git status   # si hay cambios hechos a mano en el servidor, anótalos antes de seguir
+
+# 1. Respaldo de la base de datos (el backend aplica migraciones al arrancar)
+sudo docker compose exec -T db pg_dump -U darboles_user darboles_db > ~/backup_darboles_$(date +%F_%H%M).sql
+ls -lh ~/backup_darboles_*.sql   # confirma que el archivo no pesa 0 bytes
+
+# 2. Traer el código
 git pull origin main
 
-# 1. Si cambiaste código de Python (Backend) o quieres inyectar base de datos
-sudo docker compose up -d --build
+# 3. Backend (Python): reconstruye y aplica migraciones de Alembic
+sudo docker compose up -d --build backend
+sudo docker compose logs --tail=50 backend   # busca "Running upgrade ..." y que Uvicorn arranque sin errores
+curl -s localhost:8001/api/v1/health
 
 # (Opcional) Si necesitas inyectar nuevos árboles
 sudo docker compose exec backend python app/seed.py
 
-# 2. Si cambiaste código de React/Next.js (Frontend)
+# 4. Frontend (React/Next.js)
 npm install
 npm run build
 pm2 restart darboles-web
 ```
-*(Nota: Recuerda usar `scp` para subir archivos que Git ignora, como el catálogo de imágenes)*
+
+Las imágenes de `backend/uploads/` no se tocan en este proceso: viven en el servidor gracias al volumen (ver sección 4).
+
+### Si algo sale mal (rollback)
+```bash
+git log --oneline -5
+git checkout <commit_anterior>
+sudo docker compose up -d --build backend
+npm run build && pm2 restart darboles-web
+```
+
+Si hay que volver la base de datos al respaldo:
+```bash
+cat ~/backup_darboles_FECHA.sql | sudo docker compose exec -T db psql -U darboles_user darboles_db
+```
+
