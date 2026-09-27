@@ -266,6 +266,8 @@ export default function RegalosClient() {
           invoice_activity_code: invoiceActivityCode,
           payment_method: paymentMethod,
           payment_receipt_method: paymentMethod === 'sinpe' ? receiptMethod : null,
+          // Informativo únicamente: el backend siempre recalcula el total real
+          // a partir de los precios en base de datos antes de cobrar.
           total_amount_crc: cartTotalCrc,
           gifts: cartItems.map(item => ({
             tree_id: item.tree.id,

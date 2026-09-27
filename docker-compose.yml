@@ -4,15 +4,25 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: darboles_user
-      POSTGRES_PASSWORD: darboles_password
-      POSTGRES_DB: darboles_db
+      # Los valores por defecto (darboles_user/darboles_password/darboles_db)
+      # solo aplican si no defines DB_USER/DB_PASSWORD/DB_NAME en tu .env —
+      # se mantienen como fallback para no romper despliegues existentes que
+      # todavía no los definieron, pero en producción deberías setearlos con
+      # una contraseña real y quitar la dependencia del valor por defecto.
+      POSTGRES_USER: ${DB_USER:-darboles_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-darboles_password}
+      POSTGRES_DB: ${DB_NAME:-darboles_db}
+    env_file:
+      - .env
     ports:
-      - "5433:5432"
+      # Solo accesible desde el propio servidor (127.0.0.1), no desde internet.
+      # Si necesitás conectarte desde tu laptop, usá un túnel SSH en vez de
+      # abrir este puerto públicamente.
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U darboles_user -d darboles_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-darboles_user} -d ${DB_NAME:-darboles_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
