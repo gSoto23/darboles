@@ -107,7 +107,7 @@ LEADS_PER_HOUR=60
 # Sin URL o sin clave la sincronización queda apagada y el mapa muestra solo Guardianes.
 TOMATO_SYNC_URL=https://tomatocr.com/api/darboles/trees
 TOMATO_SYNC_API_KEY=...
-TOMATO_SYNC_INTERVAL_HOURS=6   # opcional; por defecto 6
+TOMATO_SYNC_HOUR=3   # opcional; hora de Costa Rica de la sincronización diaria (0–23), por defecto 3
 ```
 
 Guarda los cambios (`Ctrl+O`, `Enter`, `Ctrl+X`).
@@ -341,7 +341,7 @@ cat ~/backup_darboles_FECHA.sql | sudo docker compose exec -T db psql -U darbole
 
 El backend copia los árboles de los proyectos de reforestación de TOMATO desde `TOMATO_SYNC_URL` (docs/INTEGRACION_TOMATOCR.md → "Sincronización de árboles").
 
-- **Cuándo corre:** cada `TOMATO_SYNC_INTERVAL_HOURS` horas (6 por defecto) y una vez un minuto después de arrancar el backend. Siempre es una foto completa: si una página falla, no cambia nada y se conservan los datos anteriores.
+- **Cuándo corre:** una vez al día, a las `TOMATO_SYNC_HOUR`:00 hora de Costa Rica (3:00 por defecto). Al arrancar el backend solo corre si la última sincronización exitosa tiene más de 24 h, así un deploy no suma corridas. Siempre es una foto completa: si una página falla, no cambia nada y se conservan los datos anteriores.
 - **Forzarla:** en /admin → Árboles Sembrados → **Sincronizar ahora**, o en el servidor:
   ```bash
   cd ~/darboles && sudo docker compose exec backend python -m app.services.tomato_sync

@@ -25,6 +25,7 @@ def _year(tree: TomatoTree) -> Optional[int]:
 def _map_item(tree: TomatoTree) -> dict:
     return {
         "id": tree.id,
+        "tree_number": tree.tree_number,
         "lat": tree.lat,
         "lng": tree.lng,
         "status": tree.status,
@@ -52,7 +53,6 @@ def tomato_tree(tree_id: int, db: Session = Depends(get_db)):
     replacement = db.get(TomatoTree, tree.replaced_by_id) if tree.replaced_by_id else None
     return {
         **_map_item(tree),
-        "tree_number": tree.tree_number,
         "project_public": public,
         "planted_year": _year(tree),
         "last_checked_at": tree.last_checked_at.isoformat() if tree.last_checked_at else None,

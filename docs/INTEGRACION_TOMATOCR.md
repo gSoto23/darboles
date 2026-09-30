@@ -110,7 +110,7 @@ solo lee.
 ## Flujo
 
 ```
-Programador del backend (cada TOMATO_SYNC_INTERVAL_HOURS, y al arrancar)
+Programador del backend (una vez al día a las TOMATO_SYNC_HOUR:00 de Costa Rica; al arrancar, solo si la última exitosa tiene más de 24 h)
    │  GET $TOMATO_SYNC_URL?limit=1000[&cursor=…]   X-API-Key: $TOMATO_SYNC_API_KEY
    ▼
 tomatocr.com /api/darboles/trees  (todas las páginas: foto completa)
@@ -127,7 +127,7 @@ GET /api/v1/tomato/trees/{id}  → /mapa/tomato/{id} (ficha con visitas y fotos)
 | Archivo | Qué hace |
 | --- | --- |
 | `backend/app/services/tomato_sync.py` | Cliente (20 s por página, 3 reintentos con espera de 2, 4 y 8 s ante red caída o 5xx), validación de cada árbol, aplicación en una sola transacción, candado para no correr dos a la vez. `python -m app.services.tomato_sync` la corre a mano. |
-| `backend/app/core/sync_scheduler.py` | APScheduler dentro del backend. Aparte de `core/scheduler.py`, que tiene un trabajo viejo apagado a propósito. |
+| `backend/app/core/sync_scheduler.py` | APScheduler dentro del backend, una vez al día. Aparte de `core/scheduler.py`, que tiene un trabajo viejo apagado a propósito. |
 | `backend/app/models/tomato.py` + migración `d5e6f7a8b9c0` | Tablas propias; `tomato_trees.id` es el id de tomatocr.com. |
 | `backend/app/routers/tomato.py` | Mapa, ficha y, para administradores, `GET/POST /api/v1/admin/tomato/sync` (estado y "Sincronizar ahora"). |
 | `src/app/mapa/MapComponent.tsx` | Capas agrupadas con leaflet.markercluster y spiderfy. |
@@ -146,8 +146,8 @@ GET /api/v1/tomato/trees/{id}  → /mapa/tomato/{id} (ficha con visitas y fotos)
 | Dato | En darboles.com |
 | --- | --- |
 | `status` | Relleno del punto: verde `vivo` ("Verificado vivo"), blanco `sin_verificar` ("Sin verificar aún"), gris `muerto` ("No sobrevivió"). Los `reemplazado` no se dibujan; su ficha enlaza al árbol nuevo (`replaced_by_id`). |
-| `location_precision = "sector"` | "Ubicación aproximada (sector)". Los árboles del mismo sector se agrupan y se separan en abanico al abrir el grupo. |
-| `date_planted` | **Solo el año**, como "Año de siembra (según inventario)": en algunos proyectos la fecha es la de la importación, no la real. Si tomatocr.com agrega un indicador de fecha exacta, se puede mostrar la fecha completa. |
+| `location_precision` | No se muestra como texto (decisión de Gerardo, 30/09/2026). Los árboles de un mismo sector se agrupan: con 30 o menos se abren en abanico; con más, el grupo muestra la lista del sector (número, especie, estado) con enlace a cada ficha. Cuando la ubicación es `"tree"`, la ficha dice "Ubicación tomada junto al árbol". |
+| `date_planted` | **Solo el año**, como "Año de siembra" (sin nota aclaratoria): en algunos proyectos la fecha es la de la importación, no la real. Si tomatocr.com agrega un indicador de fecha exacta, se puede mostrar la fecha completa. |
 | `project.name` | Tal cual (en proyectos no autorizados llega "Proyecto institucional"). |
 | `visits` | Historial en la ficha: fecha, estado, altura, comentario público y galería (carga diferida, `width`/`height` para reservar espacio, ampliación al tocar). Sin visitas, la sección no aparece. |
 | Proyecto no público | Sin comentario ni fotos, aunque llegaran: la API de darboles.com vuelve a filtrarlos. |

@@ -28,6 +28,7 @@ interface GuardianTree {
 
 interface TomatoTree {
   id: number;
+  tree_number: number | null;
   lat: number;
   lng: number;
   status: TomatoStatus;
@@ -58,6 +59,10 @@ const dotIcon = (fill: string, border: string, borderWidth: number) => L.divIcon
   popupAnchor: [0, -8],
 });
 
+// Más de esta cantidad de árboles en exactamente el mismo punto (la coordenada de un sector):
+// en vez de abrirlos en abanico, que cubriría todo el mapa, se muestra la lista del sector
+const SPIDERFY_MAX = 30;
+
 const clusterIcon = (color: string) => (cluster: L.MarkerCluster) => {
   const n = cluster.getChildCount();
   const size = n < 10 ? 32 : n < 100 ? 38 : 46;
@@ -76,11 +81,63 @@ function ClusterLayers({ guardians, tomato, visible }: { guardians: GuardianTree
     const formatDate = (iso: string | null) =>
       iso ? new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-CR', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
     const groups: L.MarkerClusterGroup[] = [];
-    // spiderfy: al abrir un grupo en el zoom máximo, separa los árboles que comparten coordenada
-    const options = { showCoverageOnHover: false, spiderfyOnMaxZoom: true, maxClusterRadius: 45 };
+    // Los dos comportamientos automáticos de la librería van apagados: el clic en un grupo lo decide onClusterClick
+    const options = { showCoverageOnHover: false, spiderfyOnMaxZoom: false, zoomToBoundsOnClick: false, maxClusterRadius: 45 };
+
+    const statusOrder: TomatoStatus[] = ['vivo', 'sin_verificar', 'muerto'];
+    const tomatoOf = new WeakMap<L.Marker, TomatoTree>();
+
+    // Acerca si el grupo se puede separar; si todos comparten el mismo punto, abanico (pocos) o lista del sector (muchos)
+    const onClusterClick = (e: L.LeafletEvent) => {
+      const cluster = (e as unknown as { layer: L.MarkerCluster }).layer;
+      const bounds = cluster.getBounds();
+      const samePoint = bounds.getNorthEast().equals(bounds.getSouthWest());
+      const count = cluster.getChildCount();
+      if (samePoint && count > SPIDERFY_MAX) {
+        const trees = cluster.getAllChildMarkers().map(m => tomatoOf.get(m)).filter((x): x is TomatoTree => !!x);
+        if (trees.length) {
+          L.popup({ ...sectorPopupSize(), autoPanPaddingTopLeft: L.point(56, 12), autoPanPaddingBottomRight: L.point(12, 12) }).setLatLng(cluster.getLatLng()).setContent(sectorPopup(trees)).openOn(map);
+          return;
+        }
+      }
+      if (samePoint || map.getZoom() >= map.getMaxZoom() || map.getBoundsZoom(bounds) <= map.getZoom()) {
+        cluster.spiderfy();
+      } else {
+        cluster.zoomToBounds({ padding: [30, 30] });
+      }
+    };
+
+    // En celulares la ventana tiene que caber entre los botones de zoom y el borde derecho
+    const sectorPopupSize = () => {
+      const width = Math.max(200, Math.min(300, map.getSize().x - 110));
+      return { minWidth: width, maxWidth: width };
+    };
+
+    const sectorPopup = (trees: TomatoTree[]) => {
+      const first = trees[0];
+      const counts = statusOrder
+        .map(status => [status, trees.filter(tr => tr.status === status).length] as const)
+        .filter(([, n]) => n > 0)
+        .map(([status, n]) => `<span style="display:inline-flex;align-items:center;gap:.3rem;margin-right:.6rem"><span style="width:10px;height:10px;border-radius:50%;background:${STATUS_FILL[status]};border:2px solid ${TOMATO_BORDER};display:inline-block"></span>${escapeHtml(t(`tomato.status.${status}`))}: ${n}</span>`)
+        .join('');
+      const rows = [...trees]
+        .sort((a, b) => (a.tree_number ?? Infinity) - (b.tree_number ?? Infinity) || a.id - b.id)
+        .map(tr => `<li style="padding:.3rem 0;border-top:1px solid #eee"><a href="/mapa/tomato/${tr.id}" style="color:#0f172a;text-decoration:none;display:flex;justify-content:space-between;gap:.5rem">
+            <span>${tr.tree_number != null ? `#${tr.tree_number} · ` : ''}${escapeHtml(tr.species || t('tomato.unknownSpecies'))}</span>
+            <span style="color:#666;white-space:nowrap">${escapeHtml(t(`tomato.status.${tr.status}`))} →</span></a></li>`)
+        .join('');
+      return `<div>
+        <span style="display:inline-block;font-size:.7rem;font-weight:600;color:#fff;background:${TOMATO_BORDER};border-radius:9999px;padding:.1rem .5rem">${escapeHtml(t('mapa.legend.tomato'))}</span>
+        <div style="font-weight:700;margin-top:.4rem">${escapeHtml(first.sector || first.project)} · ${escapeHtml(t('tomato.sectorCount', { n: trees.length }))}</div>
+        <div style="color:#666;font-size:.8rem">${escapeHtml(first.project)}</div>
+        <div style="font-size:.8rem;margin:.5rem 0">${counts}</div>
+        <ul style="list-style:none;margin:0;padding:0;max-height:220px;overflow-y:auto;font-size:.85rem">${rows}</ul>
+      </div>`;
+    };
 
     if (visible.guardian) {
       const group = L.markerClusterGroup({ ...options, iconCreateFunction: clusterIcon(GUARDIAN_COLOR) });
+      group.on('clusterclick', onClusterClick);
       guardians.forEach(tree => {
         const photo = tree.photo_url
           ? `<img src="${escapeHtml(tree.photo_url.startsWith('http') ? tree.photo_url : API_URL.replace('/api/v1', '') + tree.photo_url)}" alt="${escapeHtml(tree.species_name)}" style="width:100px;height:100px;object-fit:cover;border-radius:4px;margin-top:.5rem" loading="lazy" />`
@@ -100,16 +157,18 @@ function ClusterLayers({ guardians, tomato, visible }: { guardians: GuardianTree
 
     if (visible.tomato) {
       const group = L.markerClusterGroup({ ...options, iconCreateFunction: clusterIcon(TOMATO_BORDER) });
+      group.on('clusterclick', onClusterClick);
       tomato.forEach(tree => {
         const html = `<div style="text-align:center;min-width:180px">
           <span style="display:inline-block;font-size:.7rem;font-weight:600;color:#fff;background:${TOMATO_BORDER};border-radius:9999px;padding:.1rem .5rem;margin-bottom:.35rem">${escapeHtml(t('mapa.legend.tomato'))}</span><br/>
           <strong>${escapeHtml(tree.species || t('tomato.unknownSpecies'))}</strong><br/>
           <small style="display:block;margin-top:.35rem">${escapeHtml(t(`tomato.status.${tree.status}`))}</small>
           <small style="display:block;color:#666">${escapeHtml(tree.project)}${tree.sector ? ' · ' + escapeHtml(tree.sector) : ''}</small>
-          ${tree.location_precision === 'sector' ? `<small style="display:block;color:#666;font-style:italic">${escapeHtml(t('tomato.approxLocation'))}</small>` : ''}
           <a href="/mapa/tomato/${tree.id}" style="display:inline-block;margin-top:.6rem;font-weight:600;color:#0f172a">${escapeHtml(t('tomato.viewCard'))}</a>
         </div>`;
-        group.addLayer(L.marker([tree.lat, tree.lng], { icon: dotIcon(STATUS_FILL[tree.status], TOMATO_BORDER, 3) }).bindPopup(html));
+        const marker = L.marker([tree.lat, tree.lng], { icon: dotIcon(STATUS_FILL[tree.status], TOMATO_BORDER, 3) }).bindPopup(html);
+        tomatoOf.set(marker, tree);
+        group.addLayer(marker);
       });
       groups.push(group);
     }

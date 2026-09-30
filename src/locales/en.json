@@ -300,7 +300,6 @@
   "tomato.status.muerto": "Did not survive",
   "tomato.status.reemplazado": "Replaced",
   "tomato.unknownSpecies": "Species not recorded",
-  "tomato.approxLocation": "Approximate location (area)",
   "tomato.exactLocation": "Location taken next to the tree",
   "tomato.viewCard": "View tree →",
   "tomato.backToMap": "Back to the map",
@@ -310,8 +309,7 @@
   "tomato.project": "Project",
   "tomato.sector": "Area",
   "tomato.treeNumber": "Tree number",
-  "tomato.plantedYear": "Year planted (per inventory)",
-  "tomato.plantedYearNote": "We only show the year because some inventory dates are still approximate.",
+  "tomato.plantedYear": "Year planted",
   "tomato.lastChecked": "Last verified",
   "tomato.replacedBy": "This tree did not survive and TOMATO planted another one in its place:",
   "tomato.visitsTitle": "Visit history",
@@ -319,5 +317,7 @@
   "tomato.openPhoto": "Enlarge photo {n}",
   "tomato.photoAlt": "Photo {n} from the visit on {date}",
   "tomato.close": "Close",
-  "tomato.source": "Data from TOMATO's monitoring system (tomatocr.com), updated several times a day."
+  "tomato.source": "Data from TOMATO's monitoring system (tomatocr.com), updated every day.",
+  "tomato.sectorCount": "{n} trees",
+  "home.mapBtn": "See the tree map →"
 }

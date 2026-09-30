@@ -123,13 +123,12 @@ export default function TomatoTreeClient({ id }: { id: number }) {
               <dd style={{ margin: '0.15rem 0 0 0', fontWeight: 500 }}>{value}</dd>
             </div>
           ))}
-          {tree.planted_year && <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-muted)' }}>{t('tomato.plantedYearNote')}</p>}
         </dl>
         <div>
           <MiniMap lat={tree.lat} lng={tree.lng} />
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-muted)' }}>
-            {tree.location_precision === 'sector' ? t('tomato.approxLocation') : t('tomato.exactLocation')}
-          </p>
+          {tree.location_precision === 'tree' && (
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-muted)' }}>{t('tomato.exactLocation')}</p>
+          )}
         </div>
       </section>
 
