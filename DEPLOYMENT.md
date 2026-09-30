@@ -100,6 +100,14 @@ LEADS_FALLBACK_EMAILS=info@tomatocr.com,darbolescr@gmail.com
 # Límite del formulario (opcionales; estos son los valores por defecto)
 LEADS_PER_IP_PER_HOUR=5
 LEADS_PER_HOUR=60
+
+# Sincronización de árboles de TOMATO (tomatocr.com → darboles.com, solo lectura).
+# La clave es la MISMA que DARBOLES_SYNC_API_KEY en el .env de tomatocr.com (allá se
+# llama así; aquí, TOMATO_SYNC_API_KEY). Es distinta de TOMATO_CRM_API_KEY.
+# Sin URL o sin clave la sincronización queda apagada y el mapa muestra solo Guardianes.
+TOMATO_SYNC_URL=https://tomatocr.com/api/darboles/trees
+TOMATO_SYNC_API_KEY=...
+TOMATO_SYNC_INTERVAL_HOURS=6   # opcional; por defecto 6
 ```
 
 Guarda los cambios (`Ctrl+O`, `Enter`, `Ctrl+X`).
@@ -264,7 +272,7 @@ Si solo cambiaste el `.env`:
 - `NEXT_PUBLIC_API_URL`: `npm run build && pm2 restart darboles-web`.
 - Cambiar `SECRET_KEY` cierra todas las sesiones abiertas; es normal que todos deban volver a iniciar sesión.
 
-Las variables del formulario de empresas (`TOMATO_CRM_*`, `LEADS_*`) también son del backend: `sudo docker compose up -d backend`.
+Las variables del formulario de empresas (`TOMATO_CRM_*`, `LEADS_*`) y de la sincronización de árboles (`TOMATO_SYNC_*`) también son del backend: `sudo docker compose up -d backend`.
 
 Las imágenes de `backend/uploads/` no se tocan en este proceso: viven en el servidor gracias al volumen (ver sección 4).
 
@@ -328,6 +336,30 @@ cat ~/backup_darboles_FECHA.sql | sudo docker compose exec -T db psql -U darbole
 - **Si la clave se filtra:** generar otra y cambiarla en los dos `.env` al mismo tiempo.
 - **IP real:** el límite por IP usa `X-Real-IP`, que pone Nginx (`proxy_set_header X-Real-IP $remote_addr;` en `location /api/`). Solo se cree en ese encabezado cuando la conexión llega desde el propio servidor.
 - **Límite en memoria:** se reinicia con cada deploy del backend; el backend debe seguir corriendo con un solo proceso de Uvicorn.
+
+### Sincronización de árboles de TOMATO
+
+El backend copia los árboles de los proyectos de reforestación de TOMATO desde `TOMATO_SYNC_URL` (docs/INTEGRACION_TOMATOCR.md → "Sincronización de árboles").
+
+- **Cuándo corre:** cada `TOMATO_SYNC_INTERVAL_HOURS` horas (6 por defecto) y una vez un minuto después de arrancar el backend. Siempre es una foto completa: si una página falla, no cambia nada y se conservan los datos anteriores.
+- **Forzarla:** en /admin → Árboles Sembrados → **Sincronizar ahora**, o en el servidor:
+  ```bash
+  cd ~/darboles && sudo docker compose exec backend python -m app.services.tomato_sync
+  ```
+- **Ver cómo le fue:** el recuadro de /admin → Árboles Sembrados muestra la última sincronización exitosa y el error del último intento, si falló. En el log:
+  ```bash
+  sudo docker compose logs backend | grep "sincronización de TOMATO" | tail -5
+  ```
+- **`401` (clave rechazada):** `TOMATO_SYNC_API_KEY` de aquí y `DARBOLES_SYNC_API_KEY` de tomatocr.com deben ser idénticas. Para compararlas sin mostrarlas (largo y huella):
+  ```bash
+  cd ~/darboles && sudo docker compose exec backend python -c "import os,hashlib;k=os.environ.get('TOMATO_SYNC_API_KEY','');print(len(k), hashlib.sha256(k.encode()).hexdigest()[:12], repr(k[:1]), repr(k[-1:]))"
+  ```
+  ```bash
+  cd /home/ubuntu/tomatocr && .venv/bin/python -c "from app.core.config import settings;import hashlib;k=settings.DARBOLES_SYNC_API_KEY;print(len(k), hashlib.sha256(k.encode()).hexdigest()[:12], repr(k[:1]), repr(k[-1:]))"
+  ```
+  Después de corregir: `sudo systemctl restart tomato` en tomatocr.com y `sudo docker compose up -d backend` aquí.
+- **`503`:** tomatocr.com no tiene `DARBOLES_SYNC_API_KEY` configurada o no se reinició.
+- **Un solo proceso:** el programador vive dentro del backend (APScheduler). Si algún día el backend corre con varios procesos de Uvicorn, cada uno sincronizaría por su cuenta: habría que pasarlo a un cron del servidor.
 
 ### ⚠️ Pendiente — necesita tu input, no lo inventamos
 
