@@ -220,6 +220,9 @@ function RegistroForm() {
               {loading ? t("reg.validate.loading") : t("reg.validate.btn")}
             </button>
           </form>
+          <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', textAlign: 'center', margin: '1.5rem 0 0 0' }}>
+            {t("reg.validate.howTo")} <a href="/nosotros#como-sembrar" style={{ color: 'var(--color-foreground)', fontWeight: 600 }}>{t("reg.validate.howToLink")}</a>
+          </p>
         </div>
       )}
 
