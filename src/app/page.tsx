@@ -18,6 +18,9 @@ export default function Home() {
         <p className={styles.subtitle}>
           {t("home.subtitle")}
         </p>
+        <Link href="/mapa" className={styles.mapButton}>
+          {t("home.mapBtn")}
+        </Link>
       </main>
 
       <div className={`page-container ${styles.optionsGrid} slide-up`} style={{ animationDelay: '0.15s' }}>

@@ -141,3 +141,21 @@
 .card:hover .cardAction svg {
   transform: translateX(4px);
 }
+
+/* Botón al mapa, debajo del subtítulo del inicio */
+.mapButton {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 9999px;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.mapButton:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}

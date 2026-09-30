@@ -338,3 +338,56 @@ def test_manual_command_runs(tmp_path):
                          capture_output=True, text=True)
     assert out.returncode == 1
     assert "sin configurar" in out.stdout and "Traceback" not in out.stderr
+
+
+# --- Programador: una vez al día ------------------------------------------------------
+
+def test_scheduler_runs_once_a_day_at_configured_hour(monkeypatch):
+    from app.core import sync_scheduler
+    monkeypatch.setenv("TOMATO_SYNC_URL", URL)
+    monkeypatch.setenv("TOMATO_SYNC_API_KEY", KEY)
+    monkeypatch.setenv("TOMATO_SYNC_HOUR", "4")
+    sync_scheduler.start()
+    try:
+        job = sync_scheduler._scheduler.get_job("tomato_sync")
+        fields = {f.name: str(f) for f in job.trigger.fields}
+        assert fields["hour"] == "4" and fields["minute"] == "0" and fields["day"] == "*"
+        assert str(job.trigger.timezone) == "America/Costa_Rica"
+        assert sync_scheduler._scheduler.get_job("tomato_sync_startup") is not None
+    finally:
+        sync_scheduler.stop()
+
+
+def test_scheduler_hour_defaults_to_3_and_ignores_bad_values(monkeypatch):
+    from app.core import sync_scheduler
+    monkeypatch.delenv("TOMATO_SYNC_HOUR", raising=False)
+    assert sync_scheduler.sync_hour() == 3
+    for bad in ("25", "-1", "tres"):
+        monkeypatch.setenv("TOMATO_SYNC_HOUR", bad)
+        assert sync_scheduler.sync_hour() == 3
+
+
+def test_scheduler_off_without_config(monkeypatch):
+    from app.core import sync_scheduler
+    monkeypatch.delenv("TOMATO_SYNC_API_KEY", raising=False)
+    sync_scheduler.start()
+    assert sync_scheduler._scheduler is None
+
+
+def test_startup_skips_when_last_success_is_recent(db_factory, monkeypatch):
+    from app.core import sync_scheduler
+    sync(db_factory, FakeTomato(pages=[[make_tree(1)]]))
+    calls = []
+    monkeypatch.setattr(sync_scheduler, "SessionLocal", db_factory)
+    monkeypatch.setattr(sync_scheduler, "_job", lambda trigger: calls.append(trigger))
+    sync_scheduler._startup_job()
+    assert calls == []  # hubo una exitosa hace segundos: se espera a la corrida diaria
+
+
+def test_startup_runs_when_never_synced(db_factory, monkeypatch):
+    from app.core import sync_scheduler
+    calls = []
+    monkeypatch.setattr(sync_scheduler, "SessionLocal", db_factory)
+    monkeypatch.setattr(sync_scheduler, "_job", lambda trigger: calls.append(trigger))
+    sync_scheduler._startup_job()
+    assert calls == ["startup"]
