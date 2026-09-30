@@ -49,8 +49,7 @@ def _apply(db: Session, data: AdminTrackedTreeCreate) -> TrackedTree:
     else:
         if not data.species_id or not db.get(TreeSpecies, data.species_id):
             raise ValueError("Especie no válida")
-        prefix = "TOM" if data.origin == "tomato" else "DAR"
-        tree = TrackedTree(id_code=_new_code(db, prefix), species_id=data.species_id)
+        tree = TrackedTree(id_code=_new_code(db, "DAR"), species_id=data.species_id)
         db.add(tree)
 
     tree.origin = data.origin
@@ -134,8 +133,10 @@ async def import_tracked_trees(
         if not species_id:
             errors.append({"fila": line_no, "error": f"Especie desconocida: {row.get('especie')}"})
             continue
-        values.setdefault("origin", "tomato")
-        values["origin"] = values["origin"].lower()
+        if values.get("origin", "guardian").lower() != "guardian":
+            errors.append({"fila": line_no, "error": "Los árboles de TOMATO se sincronizan desde tomatocr.com; aquí solo se cargan árboles de Guardianes"})
+            continue
+        values["origin"] = "guardian"
         for key in ("latitude", "longitude"):
             if key in values:
                 values[key] = values[key].replace(",", ".")

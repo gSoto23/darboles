@@ -62,7 +62,8 @@ class AdminTrackedTreeCreate(BaseModel):
     # si no, se crea un árbol nuevo sin pedido asociado.
     id_code: Optional[str] = None
     species_id: Optional[int] = None
-    origin: Literal["guardian", "tomato"] = "tomato"
+    # Los árboles de TOMATO ya no se cargan a mano: llegan por la sincronización con tomatocr.com
+    origin: Literal["guardian"] = "guardian"
     project_name: Optional[str] = Field(default=None, max_length=160)
     planter_name: Optional[str] = Field(default=None, max_length=120)
     planter_email: Optional[EmailStr] = None

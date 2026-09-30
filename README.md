@@ -31,17 +31,18 @@ Para producción, ver **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 | Tienda (`/regalos`) | Carrito para uno o varios destinatarios, envío según GAM o fuera del GAM, pago con SINPE o tarjeta. El total se recalcula en el servidor con los precios de la base. | `src/app/regalos`, `backend/app/routers/payments.py` |
 | Certificado | PDF "Certificado de regalo" con código de registro y QR hacia `/registro`. | `backend/app/services/pdf_generator.py` |
 | Registro del Guardián (`/registro`) | La persona valida su código, marca en el mapa dónde sembró (con GPS opcional), la fecha y una foto. Solo acepta ubicaciones dentro de Costa Rica. | `src/app/registro`, `backend/app/routers/tracking.py` |
-| Mapa (`/mapa`) | Árboles sembrados por origen: verde para Guardianes, naranja para proyectos ejecutados por TOMATO. | `src/app/mapa` |
-| Admin (`/admin`) | Pedidos, catálogo de especies (con la marca "Nativo de Costa Rica", que solo se activa con confirmación del ingeniero forestal), árboles sembrados (alta manual o CSV), configuración de tienda y usuarios. | `src/app/admin`, `backend/app/routers/admin*.py` |
+| Mapa (`/mapa`) | Dos capas agrupadas (leaflet.markercluster, con spiderfy cuando varios árboles comparten punto): Guardianes (círculo verde) y proyectos de reforestación de TOMATO (borde naranja; relleno verde = verificado vivo, blanco = sin verificar, gris = no sobrevivió; los reemplazados no se dibujan). | `src/app/mapa` |
+| Árboles de TOMATO | Copiados de tomatocr.com cada 6 h por una sincronización de solo lectura (foto completa; si falla no cambia nada). Ficha en `/mapa/tomato/[id]` con historial de visitas y galería de fotos (solo de proyectos con nombre autorizado). La fecha de siembra se muestra solo como año. Ver [docs/INTEGRACION_TOMATOCR.md](docs/INTEGRACION_TOMATOCR.md). | `backend/app/services/tomato_sync.py`, `backend/app/routers/tomato.py`, `src/app/mapa/tomato/[id]` |
+| Admin (`/admin`) | Pedidos, catálogo de especies (con la marca "Nativo de Costa Rica", que solo se activa con confirmación del ingeniero forestal), árboles sembrados de Guardianes (alta manual o CSV) y estado de la sincronización con tomatocr.com ("Sincronizar ahora"), configuración de tienda y usuarios. | `src/app/admin`, `backend/app/routers/admin*.py` |
 | Formulario de empresas | En `/empresas` y `/contacto`. El navegador envía a `POST /api/v1/leads/empresas`; el backend valida, filtra bots (honeypot y límite por IP) y reenvía al CRM de tomatocr.com de servidor a servidor. Si tomatocr.com no responde, va por correo de respaldo. Textos en voseo (es un formulario de TOMATO). Ver [docs/INTEGRACION_TOMATOCR.md](docs/INTEGRACION_TOMATOCR.md). | `src/components/CompanyLeadForm.tsx`, `backend/app/routers/leads.py`, `backend/app/services/tomato_crm.py` |
 | Cómo sembrar (inicio y `/nosotros#como-sembrar`) | "El proceso, en 4 pasos", debajo del bloque principal del inicio y en /nosotros: Hidrata, Prepara la tierra, Siembra, Registra y cuida. Mismo proceso e ilustraciones que tomatocr.com/programas/darboles (SVG en `public/images/pasos/`); si cambian allá, actualizar aquí. `/registro` enlaza a esta sección. | `src/components/PlantingSteps.tsx` |
 | Contenido | Inicio, `/nosotros`, `/empresas`, `/contacto`, `/terminos`, `/privacidad`. | `src/app/*`, `src/locales/*` |
 
 **Roles:** usuario, administrador (`is_admin`) y superadministrador (`is_superadmin`). Todas las rutas `/api/v1/admin/*` exigen sesión de administrador, salvo `GET /admin/trees` y `GET /config`, que usa la tienda sin sesión.
 
-**Árboles sembrados** (`tracked_trees`): los que vienen de un pedido nacen como `unregistered` y pasan a `planted` cuando se registran. El campo `origin` vale `guardian` o `tomato`, y `project_name` guarda el proyecto en el caso de TOMATO. Un árbol de pedido que se "quita del mapa" en el admin vuelve a `unregistered` para que su código siga sirviendo.
+**Árboles sembrados** (`tracked_trees`): los que vienen de un pedido nacen como `unregistered` y pasan a `planted` cuando se registran. El campo `origin` es `guardian`; el valor `tomato` solo queda en cargas manuales antiguas, porque los árboles de TOMATO viven ahora en sus propias tablas (`tomato_trees`, `tomato_visits`, `tomato_visit_photos`, `tomato_sync_runs`) y solo los escribe la sincronización. Un árbol de pedido que se "quita del mapa" en el admin vuelve a `unregistered` para que su código siga sirviendo.
 
-**Importar CSV en el admin:** columnas `especie;latitud;longitud;fecha_siembra;proyecto;origen;responsable` (acepta `;` o `,` y coma decimal). La especie se busca por nombre común o científico. La importación es todo o nada: si una fila falla, no se carga ninguna. Hay una plantilla descargable en la misma pestaña.
+**Importar CSV en el admin:** columnas `especie;latitud;longitud;fecha_siembra;responsable` (solo árboles de Guardianes; una fila con `origen=tomato` se rechaza) (acepta `;` o `,` y coma decimal). La especie se busca por nombre común o científico. La importación es todo o nada: si una fila falla, no se carga ninguna. Hay una plantilla descargable en la misma pestaña.
 
 ---
 
@@ -60,10 +61,10 @@ darboles/
 │   ├── alembic/versions/         # Migraciones (se aplican solas al arrancar el contenedor)
 │   ├── app/
 │   │   ├── core/                 # database, security (JWT), mailer, uploads (validación de imágenes)
-│   │   ├── models/               # user, tree, gift, tracked_tree, campaign, config
+│   │   ├── models/               # user, tree, gift, tracked_tree, tomato, campaign, config
 │   │   ├── routers/              # auth, admin, admin_tracking, admin_users, leads, payments, tracking, inventory, config
 │   │   ├── schemas/
-│   │   ├── services/             # pdf_generator, tilopay, tomato_crm
+│   │   ├── services/             # pdf_generator, tilopay, tomato_crm, tomato_sync
 │   │   ├── seed.py               # Datos iniciales (especies y usuarios base)
 │   │   └── main.py               # Punto de entrada FastAPI
 │   ├── tests/                    # Pruebas (pytest)

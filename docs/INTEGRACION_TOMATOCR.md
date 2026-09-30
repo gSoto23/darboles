@@ -1,4 +1,9 @@
-# Integración con el CRM de tomatocr.com (lado darboles.com)
+# Integraciones con tomatocr.com (lado darboles.com)
+
+Dos integraciones de servidor a servidor: el **formulario de empresas → CRM** (abajo) y la
+**sincronización de árboles de TOMATO → mapa** (al final).
+
+# 1. Formulario de empresas → CRM de tomatocr.com
 
 El contrato completo vive en el repositorio de tomatocr.com
 (`docs/INTEGRACION_DARBOLES.md`). Este documento explica cómo lo implementa
@@ -94,3 +99,63 @@ Registro:
   validación (422) y el evento GA4 `generate_lead`.
 
 Para diagnosticar un `401`, ver DEPLOYMENT.md §8 → "Formulario de empresas".
+
+
+# 2. Sincronización de árboles de TOMATO → mapa de darboles.com
+
+Contrato completo en el repositorio de tomatocr.com: `docs/INTEGRACION_DARBOLES.md`,
+sección "Sincronización de árboles". tomatocr.com es la fuente de verdad; darboles.com
+solo lee.
+
+## Flujo
+
+```
+Programador del backend (cada TOMATO_SYNC_INTERVAL_HOURS, y al arrancar)
+   │  GET $TOMATO_SYNC_URL?limit=1000[&cursor=…]   X-API-Key: $TOMATO_SYNC_API_KEY
+   ▼
+tomatocr.com /api/darboles/trees  (todas las páginas: foto completa)
+   │  valida todo; si algo falla no toca la base
+   ▼
+tomato_trees / tomato_visits / tomato_visit_photos  (+ registro en tomato_sync_runs)
+   ▼
+GET /api/v1/tomato/trees/map   → /mapa (capa "Proyectos de reforestación TOMATO")
+GET /api/v1/tomato/trees/{id}  → /mapa/tomato/{id} (ficha con visitas y fotos)
+```
+
+## Código
+
+| Archivo | Qué hace |
+| --- | --- |
+| `backend/app/services/tomato_sync.py` | Cliente (20 s por página, 3 reintentos con espera de 2, 4 y 8 s ante red caída o 5xx), validación de cada árbol, aplicación en una sola transacción, candado para no correr dos a la vez. `python -m app.services.tomato_sync` la corre a mano. |
+| `backend/app/core/sync_scheduler.py` | APScheduler dentro del backend. Aparte de `core/scheduler.py`, que tiene un trabajo viejo apagado a propósito. |
+| `backend/app/models/tomato.py` + migración `d5e6f7a8b9c0` | Tablas propias; `tomato_trees.id` es el id de tomatocr.com. |
+| `backend/app/routers/tomato.py` | Mapa, ficha y, para administradores, `GET/POST /api/v1/admin/tomato/sync` (estado y "Sincronizar ahora"). |
+| `src/app/mapa/MapComponent.tsx` | Capas agrupadas con leaflet.markercluster y spiderfy. |
+| `src/app/mapa/tomato/[id]/` | Ficha del árbol. |
+| `backend/tests/test_tomato_sync.py` | Pruebas con tomatocr.com simulado. |
+
+## Reglas de la sincronización
+
+- **Foto completa siempre** (sin `updated_since`). Se crea o actualiza cada árbol por `id`; las visitas se actualizan por su `id` y las fotos de cada visita se reemplazan completas.
+- **Árboles que ya no vienen:** `active = false` (se ocultan, no se borran). Si vuelven a aparecer, se reactivan.
+- **Si algo falla** (401, 503, 400/422, red, 5xx después de los reintentos, un dato con formato inválido o un cursor que se repite): no se cambia nada y el error queda en `tomato_sync_runs`. Un árbol con datos rotos cancela toda la corrida, porque saltarlo lo daría de baja por error.
+- **401 y 503 no se reintentan**: son de configuración (ver DEPLOYMENT.md §8).
+
+## Qué se muestra
+
+| Dato | En darboles.com |
+| --- | --- |
+| `status` | Relleno del punto: verde `vivo` ("Verificado vivo"), blanco `sin_verificar` ("Sin verificar aún"), gris `muerto` ("No sobrevivió"). Los `reemplazado` no se dibujan; su ficha enlaza al árbol nuevo (`replaced_by_id`). |
+| `location_precision = "sector"` | "Ubicación aproximada (sector)". Los árboles del mismo sector se agrupan y se separan en abanico al abrir el grupo. |
+| `date_planted` | **Solo el año**, como "Año de siembra (según inventario)": en algunos proyectos la fecha es la de la importación, no la real. Si tomatocr.com agrega un indicador de fecha exacta, se puede mostrar la fecha completa. |
+| `project.name` | Tal cual (en proyectos no autorizados llega "Proyecto institucional"). |
+| `visits` | Historial en la ficha: fecha, estado, altura, comentario público y galería (carga diferida, `width`/`height` para reservar espacio, ampliación al tocar). Sin visitas, la sección no aparece. |
+| Proyecto no público | Sin comentario ni fotos, aunque llegaran: la API de darboles.com vuelve a filtrarlos. |
+
+Las fotos se enlazan directo a su URL en tomatocr.com (S3 público o `https://tomatocr.com/static/…`); no se copian.
+
+## Probar en local
+
+1. tomatocr.com en local (puerto 8123) con `DARBOLES_SYNC_API_KEY=clave-sync-local`, `USE_SQLITE=True`, `MAIL_USERNAME=` y una base desechable; cargarle un inventario con su importador (`app.utils.reforestation.import_inventory_csv`) y visitas con `record_check`.
+2. Backend de darboles.com con `TOMATO_SYNC_URL=http://127.0.0.1:8123/api/darboles/trees` y `TOMATO_SYNC_API_KEY=clave-sync-local`, y `python -m app.services.tomato_sync`.
+3. Frontend con `NEXT_PUBLIC_API_URL=http://localhost:8011/api/v1`; revisar `/mapa` y `/mapa/tomato/1`.

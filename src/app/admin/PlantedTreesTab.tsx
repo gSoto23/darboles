@@ -34,10 +34,34 @@ interface SpeciesOption {
   name: string;
 }
 
-const ORIGIN_LABEL: Record<Origin, string> = { guardian: 'Guardián', tomato: 'Proyecto TOMATO' };
+// 'tomato' solo aparece en cargas manuales antiguas; los de TOMATO ahora llegan por la sincronización
+const ORIGIN_LABEL: Record<Origin, string> = { guardian: 'Guardián', tomato: 'TOMATO (carga manual antigua)' };
 const ORIGIN_COLOR: Record<Origin, string> = { guardian: '#16a34a', tomato: '#e4572e' };
 
-const CSV_TEMPLATE = "especie;latitud;longitud;fecha_siembra;proyecto;origen;responsable\nCas;10.0162;-84.2116;2026-06-01;Reforestación Municipalidad de Alajuela;tomato;Cuadrilla TOMATO\n";
+// Solo árboles de Guardianes: los de TOMATO llegan por la sincronización con tomatocr.com
+const CSV_TEMPLATE = "especie;latitud;longitud;fecha_siembra;responsable\nCas;10.0162;-84.2116;2026-06-01;Ana Mora\n";
+
+interface SyncRun {
+  started_at: string;
+  finished_at: string | null;
+  ok: boolean;
+  trigger: string;
+  received: number | null;
+  created: number | null;
+  updated: number | null;
+  deactivated: number | null;
+  http_status: number | null;
+  error: string | null;
+}
+
+interface SyncStatus {
+  configured: boolean;
+  last_run: SyncRun | null;
+  last_success: SyncRun | null;
+  active_trees: number;
+}
+
+const formatDateTime = (iso: string | null) => iso ? new Date(iso).toLocaleString('es-CR', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 const inputStyle = { width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-foreground)' };
 const labelStyle = { display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' };
@@ -46,7 +70,6 @@ const emptyForm = {
   mode: 'new' as 'new' | 'existing',
   id_code: '',
   species_id: '',
-  origin: 'tomato' as Origin,
   project_name: '',
   planter_name: '',
   planter_email: '',
@@ -71,7 +94,6 @@ async function readApiError(res: Response, fallback: string): Promise<string> {
 export default function PlantedTreesTab() {
   const [rows, setRows] = useState<PlantedTree[]>([]);
   const [species, setSpecies] = useState<SpeciesOption[]>([]);
-  const [originFilter, setOriginFilter] = useState<'' | Origin>('');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [location, setLocation] = useState<LatLng | null>(null);
@@ -79,17 +101,54 @@ export default function PlantedTreesTab() {
   const [saving, setSaving] = useState(false);
   const [csvErrors, setCsvErrors] = useState<{ fila: number; error: string }[]>([]);
   const [importing, setImporting] = useState(false);
+  const [sync, setSync] = useState<SyncStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const fetchSync = () => {
+    fetch(`${API_URL}/admin/tomato/sync`, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : null)
+      .then(setSync)
+      .catch(err => console.error(err));
+  };
+
+  useEffect(fetchSync, []);
+
+  const handleSyncNow = async () => {
+    const before = sync?.last_run?.started_at;
+    setSyncing(true);
+    const res = await fetch(`${API_URL}/admin/tomato/sync`, { method: 'POST', headers: authHeaders() });
+    if (!res.ok) {
+      setSyncing(false);
+      toast.error(await readApiError(res, 'No se pudo iniciar la sincronización'));
+      return;
+    }
+    // Corre en segundo plano: consultamos el estado hasta que aparezca una corrida nueva terminada
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const status: SyncStatus | null = await fetch(`${API_URL}/admin/tomato/sync`, { headers: authHeaders() }).then(r => r.ok ? r.json() : null).catch(() => null);
+      const run = status?.last_run;
+      if (run && run.started_at !== before && run.finished_at) {
+        setSync(status);
+        setSyncing(false);
+        if (run.ok) toast.success(`Sincronizado: ${run.received} árboles (${run.created} nuevos, ${run.updated} con cambios, ${run.deactivated} dados de baja)`);
+        else toast.error(`La sincronización falló: ${run.error}`);
+        return;
+      }
+    }
+    setSyncing(false);
+    fetchSync();
+    toast('La sincronización sigue en curso; revisa el estado en unos minutos.');
+  };
 
   const fetchRows = () => {
     const params = new URLSearchParams({ tree_status: 'planted' });
-    if (originFilter) params.set('origin', originFilter);
     fetch(`${API_URL}/admin/tracking?${params}`, { headers: authHeaders() })
       .then(res => res.ok ? res.json() : [])
       .then(setRows)
       .catch(err => console.error(err));
   };
 
-  useEffect(fetchRows, [originFilter]);
+  useEffect(fetchRows, []);
 
   useEffect(() => {
     fetch(`${API_URL}/admin/trees`)
@@ -144,7 +203,7 @@ export default function PlantedTreesTab() {
     const body = {
       id_code: form.mode === 'existing' ? form.id_code : null,
       species_id: form.mode === 'new' ? Number(form.species_id) : null,
-      origin: form.mode === 'existing' ? 'guardian' : form.origin,
+      origin: 'guardian',
       project_name: form.project_name || null,
       planter_name: form.planter_name || null,
       planter_email: form.planter_email || null,
@@ -209,8 +268,31 @@ export default function PlantedTreesTab() {
 
   const templateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE)}`;
 
+  const lastRun = sync?.last_run;
+
   return (
     <div className="slide-up">
+      <section style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: '0.92rem', lineHeight: 1.6 }}>
+          <strong style={{ display: 'block', fontSize: '1rem' }}>Árboles de TOMATO (sincronizados desde tomatocr.com)</strong>
+          {!sync ? 'Cargando estado…' : !sync.configured ? (
+            <span style={{ color: '#b45309' }}>Sincronización apagada: faltan TOMATO_SYNC_URL y TOMATO_SYNC_API_KEY en el .env del backend.</span>
+          ) : (
+            <>
+              <span>{sync.active_trees} árboles sincronizados · Última sincronización exitosa: {formatDateTime(sync.last_success?.finished_at ?? null)}</span>
+              {lastRun && !lastRun.ok && (
+                <span style={{ display: 'block', color: '#b91c1c' }}>Último intento ({formatDateTime(lastRun.started_at)}) falló: {lastRun.error}</span>
+              )}
+            </>
+          )}
+        </div>
+        <button type="button" onClick={handleSyncNow} disabled={syncing || !sync?.configured}
+          style={{ padding: '0.7rem 1.1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', fontWeight: 600, cursor: syncing ? 'wait' : 'pointer', opacity: sync?.configured ? 1 : 0.5 }}>
+          {syncing ? 'Sincronizando…' : 'Sincronizar ahora'}
+        </button>
+      </section>
+
+      <h3 style={{ fontSize: '1.1rem', margin: '0 0 1rem 0' }}>Árboles de Guardianes</h3>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
         <button onClick={() => setShowForm(s => !s)} style={{ padding: '0.75rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer' }}>
           {showForm ? 'Cerrar formulario' : '+ Registrar árbol sembrado'}
@@ -220,11 +302,6 @@ export default function PlantedTreesTab() {
           <input type="file" accept=".csv,text/csv" onChange={handleImport} disabled={importing} style={{ display: 'none' }} />
         </label>
         <a href={templateHref} download="plantilla_arboles_sembrados.csv" style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Descargar plantilla CSV</a>
-        <select value={originFilter} onChange={e => setOriginFilter(e.target.value as '' | Origin)} style={{ ...inputStyle, width: 'auto', marginLeft: 'auto' }}>
-          <option value="">Todos los orígenes</option>
-          <option value="guardian">Guardianes</option>
-          <option value="tomato">Proyectos TOMATO</option>
-        </select>
       </div>
 
       {csvErrors.length > 0 && (
@@ -241,7 +318,7 @@ export default function PlantedTreesTab() {
           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer' }}>
               <input type="radio" checked={form.mode === 'new'} onChange={() => setForm(f => ({ ...f, mode: 'new' }))} />
-              Árbol nuevo (proyecto o sin código)
+              Árbol nuevo sin código de regalo
             </label>
             <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer' }}>
               <input type="radio" checked={form.mode === 'existing'} onChange={() => setForm(f => ({ ...f, mode: 'existing' }))} />
@@ -263,24 +340,13 @@ export default function PlantedTreesTab() {
                   {species.map(sp => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label style={labelStyle}>Origen</label>
-                <select value={form.origin} onChange={e => setForm(f => ({ ...f, origin: e.target.value as Origin }))} style={inputStyle}>
-                  <option value="tomato">Proyecto ejecutado por TOMATO</option>
-                  <option value="guardian">Guardián (persona)</option>
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Proyecto {form.origin === 'tomato' ? '' : '(opcional)'}</label>
-                <input required={form.origin === 'tomato'} value={form.project_name} onChange={e => setForm(f => ({ ...f, project_name: e.target.value }))} placeholder="Reforestación Municipalidad de…" style={inputStyle} />
-              </div>
             </div>
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div>
-              <label style={labelStyle}>{form.mode === 'existing' || form.origin === 'guardian' ? 'Nombre del Guardián' : 'Responsable (opcional)'}</label>
-              <input required={form.mode === 'existing'} value={form.planter_name} onChange={e => setForm(f => ({ ...f, planter_name: e.target.value }))} style={inputStyle} />
+              <label style={labelStyle}>Nombre del Guardián</label>
+              <input required value={form.planter_name} onChange={e => setForm(f => ({ ...f, planter_name: e.target.value }))} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Correo (opcional, no se publica)</label>
