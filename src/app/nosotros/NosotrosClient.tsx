@@ -62,7 +62,7 @@ export default function NosotrosClient() {
             </p>
           </div>
           <div className={styles.imagePlaceholder} style={{ background: 'none' }}>
-            <img src="/images/tip-transplant.png" alt="Empaque plantable de Dárboles listo para sembrarse" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '1rem', zIndex: 1 }} />
+            <img src="/images/empaque-plantable.png" alt="Empaque plantable de Dárboles listo para sembrarse" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '1rem', zIndex: 1 }} />
           </div>
         </section>
 

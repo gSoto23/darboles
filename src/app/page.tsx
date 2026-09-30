@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import styles from './page.module.css';
 import { useTranslations } from '@/context/TranslationContext';
+import PlantingSteps from '@/components/PlantingSteps';
 
 export default function Home() {
   const { t } = useTranslations();
   return (
+    <>
     <div className={styles.heroContainer}>
       <main className={`page-container slide-up`}>
         <div className={styles.badge}>{t("home.badge")}</div>
@@ -73,5 +75,11 @@ export default function Home() {
         </div>
       </div>
     </div>
+
+    {/* Cómo sembrar: el mismo proceso de 4 pasos que tomatocr.com/programas/darboles */}
+    <div className="page-container" style={{ padding: '4rem 2rem 6rem 2rem' }}>
+      <PlantingSteps />
+    </div>
+    </>
   );
 }
