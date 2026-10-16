@@ -14,9 +14,10 @@ class StoreConfigSchema(BaseModel):
     non_gam_shipping_cost: float
     gam_delivery_days: str
     non_gam_delivery_days: str
-    sinpe_number: str
-    sinpe_name: str
     gam_cantons: Optional[str] = None
+    # sinpe_number / sinpe_name se retiraron (15/10/2026): el SINPE se cobra por Tilopay y
+    # este endpoint es público, así que ya no expone el número ni el nombre del titular.
+    # Las columnas siguen en store_config, sin uso.
 
 @router.get("/config", response_model=StoreConfigSchema)
 def get_config(db: Session = Depends(get_db)):
@@ -39,8 +40,6 @@ def update_config(data: StoreConfigSchema, db: Session = Depends(get_db), curren
     config.non_gam_shipping_cost = data.non_gam_shipping_cost
     config.gam_delivery_days = data.gam_delivery_days
     config.non_gam_delivery_days = data.non_gam_delivery_days
-    config.sinpe_number = data.sinpe_number
-    config.sinpe_name = data.sinpe_name
     config.gam_cantons = data.gam_cantons
     
     db.commit()

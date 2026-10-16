@@ -6,8 +6,9 @@ Tilopay) y vuelve con el resultado. Dárboles nunca ve ni guarda datos de tarjet
 
 Es el **único medio de pago** de la tienda. El SINPE Móvil manual con comprobante se retiró
 el 15/10/2026: el backend rechaza `payment_method = "sinpe"` (400). La subida de comprobantes
-(`/checkout/upload-receipt/…`) sigue existiendo solo por pedidos viejos, y los campos de número
-SINPE en /admin → Configuración ya no se muestran en la tienda.
+(`/checkout/upload-receipt/…`) sigue existiendo solo por pedidos viejos. Los campos de número y
+titular SINPE se quitaron de /admin → Configuración y del endpoint público `/api/v1/config`
+(las columnas quedan en `store_config` sin uso).
 
 ## Flujo
 
@@ -106,3 +107,13 @@ El total que llega del navegador es solo informativo: el backend lo recalcula co
 `TreeSpecies.price_crc × cantidad` + la tarifa de envío (que solo puede ser la de GAM o la de
 fuera del GAM configuradas en /admin). Ese total es el que se envía a Tilopay y el que entra en
 el hash.
+
+## Registro de pruebas en producción
+
+- **15/10/2026 — modo pruebas de Tilopay, tarjeta de prueba.** Pedido #9 (`CARD-eaf1ee8b`,
+  ₡18 000 = 1 Limón Mesino + envío GAM). El `OrderHash` del retorno coincidió con el calculado
+  (confirma la fórmula V2 contra Tilopay real); el cobro quedó `paid`, el pedido en "Pago" en
+  /admin y llegó el correo de pago verificado. URLs registradas en Tilopay → "Gestión de URLs":
+  `…/payments/tilopay-callback` y `…/payments/tilopay-webhook`. Pendiente: SINPE Móvil no
+  apareció en la página de pago en modo pruebas; confirmar con Tilopay antes de depender de él.
+

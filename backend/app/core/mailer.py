@@ -176,7 +176,7 @@ def send_order_verified_email(to_email: str, buyer_name: str, order_id: str):
         {get_logo_html()}
         <h2 style="color: #0A0A0A;">Pago Recibido Exitosamente</h2>
         <p style="color: #666666; font-size: 16px;">Hola {buyer_name},</p>
-        <p style="color: #666666; font-size: 16px;">Hemos validado tu transferencia SINPE. Tu pedido <strong>#{order_id}</strong> se encuentra ahora en proceso de preparación y logística para su envío.</p>
+        <p style="color: #666666; font-size: 16px;">Confirmamos tu pago. Tu pedido <strong>#{order_id}</strong> se encuentra ahora en proceso de preparación y logística para su envío.</p>
         <p style="color: #666666; font-size: 16px;">Te notificaremos una vez que la orden sea entregada.</p>
         <p style="color: #999999; font-size: 14px; margin-top: 40px;">Gracias por apoyar el ecosistema Dárboles.</p>
     </div>
