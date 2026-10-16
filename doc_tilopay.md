@@ -1,46 +1,106 @@
-# Documentación: Integración de Tilopay y Conversión a Colones (CRC)
+# Tilopay: pago con tarjeta o SINPE Móvil
 
-## Resumen del Flujo
-La plataforma Dárboles fue migrada para operar íntegramente en Colones (CRC) e integrada con la pasarela de pagos Tilopay. El flujo transaccional para pagos con tarjeta sigue el modelo de **Tokenización y Redirección**.
+darboles.com cobra en línea con Tilopay por **redirección**: el comprador sale a la página
+segura de Tilopay (tarjeta de crédito o débito, o SINPE Móvil si está activo en el panel de
+Tilopay) y vuelve con el resultado. Dárboles nunca ve ni guarda datos de tarjetas.
 
-### 1. Migración a Moneda Local (CRC)
-- La base de datos y modelos (e.g., `tree_species`) fueron migrados para manejar la columna `price_crc` (entero) en lugar de `price_usd` (flotante).
-- Toda la tienda renderiza únicamente precios en Colones, con el símbolo `₡`.
-- Todas las dependencias en la tasa de cambio fija (`EXCHANGE_RATE = 515`) fueron erradicadas para mayor precisión en la facturación y consistencia en el backend.
+Aparte existe el **SINPE Móvil con comprobante** (sin Tilopay): el comprador transfiere al
+número configurado en /admin y un administrador confirma el pedido a mano.
 
-### 2. Flujo de Checkout con Tilopay
-El archivo `backend/app/services/tilopay.py` maneja la interacción con la API de la pasarela:
-1. **Generación del Token (`/login`):** Utiliza las credenciales `TILOPAY_USER` y `TILOPAY_PASSWORD` para obtener un `access_token` temporal, válido para la sesión.
-2. **Creación del Checkout (`/processPayment`):** Se envía un payload con la llave primaria (`TILOPAY_KEY`), la información del cliente, el **total en colones recalculado en el servidor** (nunca el que manda el navegador — ver sección 5), y la **URL de retorno (callback)**.
-3. **Redirección Segura:** Tilopay responde con una URL transaccional (`checkout_url`). El frontend de Dárboles intercepta esta URL y rutea al usuario fuera del sitio mediante `window.location.href = checkout_url`.
+## Flujo
 
-### 3. Webhooks y Callbacks
-- Ruta: `GET /api/v1/payments/tilopay-callback`
-- Una vez finalizada la transacción dentro del portal seguro de Tilopay (ya sea exitosa o denegada), Tilopay redirige al cliente de vuelta a este endpoint en el servidor de Dárboles (URL construida con `BACKEND_URL`, ver sección 4 — antes estaba hardcodeada a `http://localhost:8001` y por eso no funcionaba en producción).
-- **Validación:** Dárboles captura los `Query Parameters` proporcionados (como `txn_ref`, `code`, `description`).
-  - Si `code == "1"`: El pago es exitoso. La base de datos actualiza el estado de la compra a `paid`.
-  - Si ocurre otro código o se cancela, la compra cambia a `failed` y se restaura el stock reservado.
-- Tras la actualización del estado, se devuelve un `RedirectResponse` a `{FRONTEND_URL}/dashboard`, cerrando exitosamente la experiencia del cliente.
-- ⚠️ **Limitación conocida**: esta validación es solo por parámetros de query,
-  sin verificación server-to-server contra Tilopay ni firma/HMAC. No
-  implementamos esa verificación porque no tenemos documentación del endpoint
-  real de Tilopay para hacerlo — ver el pendiente en `DEPLOYMENT.md` sección 8.
-
-### 4. Variables de Entorno Requeridas (`.env` del Backend)
-```env
-TILOPAY_USER=tu_usuario
-TILOPAY_PASSWORD=tu_password
-TILOPAY_KEY=tu_llave_primaria
-FRONTEND_URL=http://localhost:3000
-# URL pública del backend, usada para construir el callback que se le pasa a
-# Tilopay. En producción debe ser la URL real (ej. https://darboles.com/api).
-BACKEND_URL=http://localhost:8001
+```
+/regalos → "Tarjeta o SINPE Móvil"
+   │ POST /api/v1/payments/checkout/gift
+   ▼
+Backend: recalcula el total con los precios de la base, reserva stock, crea los Gift
+(pending) y un CardPayment (pending) con el monto y el correo exactos.
+   │ Tilopay /login → token ; /processPayment (hashVersion V2, capture 1) → URL
+   ▼
+Página de Tilopay ──► el comprador paga
+   │ redirección: GET {BACKEND_URL}/api/v1/payments/tilopay-callback?txn_ref=…&code=…&auth=…&order=…&tpt=…&OrderHash=…
+   │ (y/o aviso de servidor a servidor: POST /api/v1/payments/tilopay-webhook)
+   ▼
+Backend verifica el OrderHash → paid / failed / awaiting / review
+   │ 303 → {FRONTEND_URL}/pago/resultado?estado=pagado|pendiente|verificando|fallido|no-encontrado&ref=…
+   ▼
+Página de resultado (no requiere sesión). Si se pagó: correo "Pago verificado" al comprador.
 ```
 
-### 5. Integridad del monto cobrado
-El `/checkout/gift` recibe `total_amount_crc` del cliente, pero **solo lo usa
-como referencia**: el monto real que se envía a Tilopay se recalcula siempre
-en el servidor sumando `TreeSpecies.price_crc × cantidad` (+ el costo de envío
-declarado por línea) para cada árbol del carrito, consultado directo en base
-de datos. Así, aunque alguien manipule el total en el navegador antes de
-enviarlo, lo que se cobra siempre corresponde a los precios reales.
+Después del pago, la logística sigue igual que con SINPE: en /admin el pedido pasa a
+Enviado y luego a Entregado (ahí se generan los certificados y se envían a quien recibe).
+
+## Verificación del retorno (la parte de seguridad)
+
+Un pedido **solo** queda pagado si se cumplen todas estas condiciones, igual que en el plugin
+oficial de Tilopay para WooCommerce (v3.1.3, `WCTilopay::computed_customer_hash` y
+`TilopayHelper.php`):
+
+1. `code == "1"`.
+2. `OrderHash` de 64 caracteres igual al que calcula darboles.com.
+3. Código de autorización (`auth`) de al menos 6 caracteres y **nunca usado en otro cobro**
+   (índice único en `card_payments.auth_code`).
+4. `order` igual al `txn_ref` del cobro.
+
+**Fórmula del `OrderHash` (hashVersion V2)**, en `services/tilopay.py → compute_order_hash`:
+
+```
+clave   = tpt + "|" + TILOPAY_KEY + "|" + TILOPAY_PASSWORD
+mensaje = http_build_query de PHP, en este orden:
+          api_Key=TILOPAY_KEY, api_user=TILOPAY_USER, orderId=tpt, external_orden_id=txn_ref,
+          amount=number_format(monto, 2)   (ej. 33000 → "33,000.00"),
+          currency=CRC, responseCode=code, auth=auth, email=correo enviado a Tilopay
+OrderHash = HMAC-SHA256(mensaje, clave) en hexadecimal
+```
+
+El monto y el correo salen de `card_payments`, es decir, de lo que se le envió a Tilopay, no
+del retorno. Solo Tilopay y Dárboles conocen la llave y la contraseña, así que un retorno
+armado a mano (por ejemplo, abrir `…/tilopay-callback?code=1`) no pasa.
+
+| Resultado | Qué pasa |
+| --- | --- |
+| Pago válido | `CardPayment` y los `Gift` pasan a `paid`; correo "Pago verificado" al comprador. Si el pedido ya se había liberado por abandono, se vuelve a reservar el stock. |
+| `code = Pending` (típico de SINPE Móvil) | `awaiting`: el pedido sigue reservado y **no** se libera a las 2 h. La confirmación llega por el webhook. |
+| Rechazado o cancelado | `failed`; se libera el stock. No requiere hash: solo afecta al propio pedido. |
+| Hash inválido, autorización repetida u orden distinta | `review`: el pedido **no cambia** y se envía una alerta a `PAYMENT_ALERT_EMAILS` para revisar el cobro en el panel de Tilopay. |
+| Recargar la página de retorno | No repite nada (el cobro ya está `paid`). |
+| Sin respuesta de Tilopay en 2 h | Un trabajo cada 15 min lo marca `expired` y libera el stock. |
+
+Estados de `card_payments.status`: `pending`, `awaiting`, `paid`, `failed`, `expired`, `review`.
+
+## Variables de entorno (backend)
+
+```env
+TILOPAY_USER=…            # usuario API (panel de Tilopay → Integraciones)
+TILOPAY_PASSWORD=…        # contraseña API (también firma el OrderHash)
+TILOPAY_KEY=…             # llave de integración
+BACKEND_URL=https://darboles.com    # base del retorno: + /api/v1/payments/tilopay-callback
+FRONTEND_URL=https://darboles.com   # base de /pago/resultado
+PAYMENT_ALERT_EMAILS=darbolescr@gmail.com   # opcional; por defecto SENDER_EMAIL
+```
+
+El modo de pruebas o producción se elige **en el panel de Tilopay** ("Ambiente de pago"), no
+aquí: la URL de la API es la misma (`https://app.tilopay.com/api/v1`).
+
+## Configuración en el panel de Tilopay
+
+- **Métodos de pago:** tarjetas y, si se quiere, SINPE Móvil.
+- **Webhook / URL de notificación** (en "Gestión de URLs"):
+  `https://darboles.com/api/v1/payments/tilopay-webhook`. Sin él, un SINPE Móvil que quede
+  pendiente al volver no se confirmaría solo.
+
+## Probar
+
+- Pruebas automáticas (Tilopay simulado): `cd backend && venv/bin/python -m pytest tests/test_tilopay.py -q`.
+- De punta a punta: con el panel en **modo pruebas**, comprar con una tarjeta de prueba de Tilopay
+  y revisar que el pedido quede *Confirmado* en /admin y que llegue el correo. Si queda en
+  `review` con "OrderHash inválido", revisar que `TILOPAY_KEY`, `TILOPAY_USER` y
+  `TILOPAY_PASSWORD` sean los de la misma integración.
+- Antes de pasar a producción: apagar el modo pruebas en el panel de Tilopay.
+
+## Integridad del monto
+
+El total que llega del navegador es solo informativo: el backend lo recalcula con
+`TreeSpecies.price_crc × cantidad` + la tarifa de envío (que solo puede ser la de GAM o la de
+fuera del GAM configuradas en /admin). Ese total es el que se envía a Tilopay y el que entra en
+el hash.

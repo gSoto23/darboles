@@ -71,6 +71,8 @@ NEXT_PUBLIC_API_URL=https://tudominio.com/api/v1
 TILOPAY_USER=...
 TILOPAY_PASSWORD=...
 TILOPAY_KEY=...
+# Opcional: a quién avisar si un pago con Tilopay queda en revisión (por defecto SENDER_EMAIL)
+PAYMENT_ALERT_EMAILS=darbolescr@gmail.com
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=tu_correo
@@ -268,7 +270,7 @@ pm2 restart darboles-web
 ```
 
 Si solo cambiaste el `.env`:
-- Variables del backend (`SECRET_KEY`, `SMTP_*`, `TILOPAY_*`, `FRONTEND_URL`, `BACKEND_URL`): `sudo docker compose up -d backend` para recrear el contenedor con los valores nuevos.
+- Variables del backend (`SECRET_KEY`, `SMTP_*`, `TILOPAY_*`, `PAYMENT_ALERT_EMAILS`, `FRONTEND_URL`, `BACKEND_URL`): `sudo docker compose up -d backend` para recrear el contenedor con los valores nuevos.
 - `NEXT_PUBLIC_API_URL`: `npm run build && pm2 restart darboles-web`.
 - Cambiar `SECRET_KEY` cierra todas las sesiones abiertas; es normal que todos deban volver a iniciar sesión.
 
@@ -361,15 +363,16 @@ El backend copia los árboles de los proyectos de reforestación de TOMATO desde
 - **`503`:** tomatocr.com no tiene `DARBOLES_SYNC_API_KEY` configurada o no se reinició.
 - **Un solo proceso:** el programador vive dentro del backend (APScheduler). Si algún día el backend corre con varios procesos de Uvicorn, cada uno sincronizaría por su cuenta: habría que pasarlo a un cron del servidor.
 
-### ⚠️ Pendiente — necesita tu input, no lo inventamos
+### Pagos con Tilopay (tarjeta o SINPE Móvil)
 
-El callback `GET /tilopay-callback` solo lee los parámetros con los que
-Tilopay redirige el navegador del comprador (`code=1` significa "pagado").
-**No hay verificación server-to-server contra la API de Tilopay ni validación
-de firma/HMAC** — no encontramos en el repo documentación del endpoint o
-formato real de verificación de Tilopay, así que no se implementó una llamada
-a ciegas (podría ser peor que no tener nada). Antes de confiar en este flujo
-para pagos reales con tarjeta, hay que conseguir de Tilopay (soporte o panel
-de comercio) el endpoint de verificación de transacción o el mecanismo de
-firma de su webhook, e implementarlo en `backend/app/routers/payments.py`
-(función `tilopay_callback`).
+Detalle completo en [doc_tilopay.md](doc_tilopay.md).
+
+- **Variables:** `TILOPAY_USER`, `TILOPAY_PASSWORD`, `TILOPAY_KEY` (panel de Tilopay), `BACKEND_URL` y `FRONTEND_URL` (ver §3) y, opcional, `PAYMENT_ALERT_EMAILS` (a quién avisar si un pago queda en revisión; por defecto `SENDER_EMAIL`). Después: `sudo docker compose up -d backend`.
+- **Panel de Tilopay:** registrar el webhook `https://darboles.com/api/v1/payments/tilopay-webhook` en "Gestión de URLs". Probar primero con el **modo pruebas** encendido ("Ambiente de pago") y apagarlo para cobrar de verdad; la URL de la API no cambia.
+- **Verificación:** un pedido con tarjeta solo queda pagado si el `OrderHash` del retorno es válido (HMAC con la llave y la contraseña de la API), con `code=1` y un código de autorización que no se haya usado antes. Si algo no cuadra, el pedido no cambia, queda en revisión y llega una alerta por correo.
+- **Revisar un cobro:**
+  ```bash
+  cd ~/darboles && sudo docker compose exec db psql -U darboles_user darboles_db -c "select txn_ref, status, amount_crc, response_code, note, created_at from card_payments order by id desc limit 10;"
+  ```
+- **Abandonos:** cada 15 minutos se liberan los cobros sin respuesta de Tilopay después de 2 h (los SINPE Móvil pendientes no).
+

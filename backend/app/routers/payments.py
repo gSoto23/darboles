@@ -1,5 +1,6 @@
 import os
 import uuid
+from urllib.parse import quote
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -8,10 +9,13 @@ from app.core.database import get_db
 from app.models.gift import Gift
 from app.models.tree import TreeSpecies
 from app.models.config import StoreConfig
+from app.models.card_payment import CardPayment
+from app.services import card_payments
 from datetime import datetime
 
 router = APIRouter()
 
+from fastapi import Request
 from fastapi.responses import RedirectResponse
 from app.services.tilopay import create_payment_link
 
@@ -129,49 +133,67 @@ async def create_gift_checkout(data: CartCheckoutRequest, db: Session = Depends(
             target_amount_crc=computed_total_crc,
             buyer_first_name=data.buyer_name,
             buyer_last_name=data.buyer_last_name or "",
-            buyer_email=data.buyer_email
+            buyer_email=data.buyer_email,
+            buyer_phone=data.buyer_whatsapp,
+            buyer_address=data.invoice_address,
         )
     except Exception as e:
         db.rollback()
-        print(f"Error calling Tilopay: {e}")
+        print(f"Error calling Tilopay: {type(e).__name__}")
         raise HTTPException(status_code=500, detail="Error de pasarela")
 
+    # Lo que se le envió a Tilopay: con esto se verifica el OrderHash del retorno
+    db.add(CardPayment(txn_ref=temp_ref, amount_crc=computed_total_crc, email=data.buyer_email))
     db.commit()
     return {"checkout_url": redirect_url, "transaction_ref": temp_ref, "total_amount_crc": computed_total_crc}
 
 @router.get("/tilopay-callback")
-async def tilopay_callback(
-    txn_ref: str,
-    code: Optional[str] = None,
-    description: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    # LIMITACIÓN CONOCIDA: este endpoint solo lee los query params con los que
-    # Tilopay redirige el navegador del comprador. No hay verificación server-to-
-    # server contra la API de Tilopay ni validación de firma/HMAC, así que en
-    # teoría alguien con un txn_ref válido podría forjar esta llamada. No
-    # implementamos una llamada de verificación porque no encontramos en el
-    # repo documentación del endpoint/formato real de verificación de Tilopay —
-    # agregarla a ciegas sería peor que no tenerla. Pendiente: pedir a Tilopay
-    # (soporte o panel de comercio) el endpoint de verificación de transacción
-    # o el mecanismo de firma de su webhook, e implementarlo aquí.
-    gifts = db.query(Gift).filter(Gift.transaction_ref == txn_ref, Gift.status == "pending").all()
+def tilopay_callback(request: Request, db: Session = Depends(get_db)):
+    """Tilopay devuelve aquí al comprador. Solo se acepta un pago si el OrderHash es válido
+    (ver services/card_payments.py); el resultado se muestra en /pago/resultado, sin sesión."""
+    q = request.query_params
+    txn_ref = q.get("txn_ref") or q.get("order") or ""
+    outcome = card_payments.apply_tilopay_result(
+        db,
+        txn_ref=txn_ref,
+        order=q.get("order"),
+        code=q.get("code"),
+        auth=q.get("auth"),
+        tilopay_order_id=q.get("tpt"),
+        order_hash=q.get("OrderHash"),
+        description=q.get("description"),
+        source="retorno",
+    )
+    frontend = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    return RedirectResponse(url=f"{frontend}/pago/resultado?estado={outcome}&ref={quote(txn_ref)}", status_code=303)
 
-    if code == "1":
-        for gift in gifts:
-            gift.status = "paid"
-    else:
-        # Pago cancelado o fallido: liberamos el stock que se había reservado
-        # en /checkout/gift, porque ese pedido nunca se va a cobrar.
-        for gift in gifts:
-            gift.status = "failed"
-            if gift.tree:
-                gift.tree.stock += gift.quantity
-    db.commit()
 
-    dashboard_url = os.getenv("FRONTEND_URL", "http://localhost:3000") + "/dashboard?payment_success=true"
+@router.post("/tilopay-webhook")
+async def tilopay_webhook(request: Request, db: Session = Depends(get_db)):
+    """Aviso de Tilopay de servidor a servidor (por ejemplo, la confirmación de un SINPE Móvil
+    que quedó pendiente). Mismo control del OrderHash que el retorno."""
+    try:
+        body = await request.json()
+    except ValueError:
+        body = None
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="JSON inválido")
+    txn_ref = str(body.get("orderNumber") or "")
+    outcome = card_payments.apply_tilopay_result(
+        db,
+        txn_ref=txn_ref,
+        order=txn_ref,
+        code=None if body.get("code") is None else str(body.get("code")),
+        auth=None if body.get("auth") is None else str(body.get("auth")),
+        tilopay_order_id=None if body.get("tpt") is None else str(body.get("tpt")),
+        order_hash=body.get("orderHash"),
+        description=body.get("description"),
+        source="webhook",
+    )
+    if outcome == card_payments.NOT_FOUND:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    return {"code": 200, "result": outcome}
 
-    return RedirectResponse(url=dashboard_url)
 
 ALLOWED_RECEIPT_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "application/pdf": ".pdf"}
 MAX_RECEIPT_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB

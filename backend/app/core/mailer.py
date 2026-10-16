@@ -284,3 +284,41 @@ def send_lead_fallback_email(lead: dict, reason: str) -> bool:
     except Exception as e:
         print(f"Error enviando respaldo de solicitud de empresa: {type(e).__name__}")
         return False
+
+
+PAYMENT_ALERT_EMAILS = os.getenv("PAYMENT_ALERT_EMAILS", "") or SENDER_EMAIL
+
+
+def send_payment_review_alert(txn_ref: str, reason: str, amount_crc: float, buyer_email: str) -> bool:
+    """Aviso al equipo: un retorno de Tilopay no se aceptó y hay que revisar el cobro a mano
+    en el panel de Tilopay antes de despachar."""
+    recipients = [r.strip() for r in PAYMENT_ALERT_EMAILS.split(",") if r.strip()]
+    if not SMTP_SERVER or not SMTP_USERNAME or not recipients:
+        print(f"[ALERTA DE PAGO] {txn_ref}: {reason}")
+        return False
+    body = "\n".join([
+        "Un pago con Tilopay quedó en revisión en darboles.com: el pedido NO se marcó como pagado.",
+        "",
+        f"Referencia: {txn_ref}",
+        f"Monto: ₡{amount_crc:,.0f}",
+        f"Comprador: {buyer_email}",
+        f"Motivo: {reason}",
+        "",
+        "Qué hacer: busca la referencia en el panel de Tilopay (admin.tilopay.com). Si el cobro aparece",
+        "aprobado, marca el pedido como Confirmado en darboles.com/admin; si no aparece, no lo despaches.",
+    ])
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = f"[darboles.com] Pago para revisar: {txn_ref}"
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = ", ".join(recipients)
+    try:
+        from smtplib import SMTP
+        server = SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, recipients, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error enviando alerta de pago: {type(e).__name__}")
+        return False
