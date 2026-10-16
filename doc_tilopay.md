@@ -4,8 +4,10 @@ darboles.com cobra en línea con Tilopay por **redirección**: el comprador sale
 segura de Tilopay (tarjeta de crédito o débito, o SINPE Móvil si está activo en el panel de
 Tilopay) y vuelve con el resultado. Dárboles nunca ve ni guarda datos de tarjetas.
 
-Aparte existe el **SINPE Móvil con comprobante** (sin Tilopay): el comprador transfiere al
-número configurado en /admin y un administrador confirma el pedido a mano.
+Es el **único medio de pago** de la tienda. El SINPE Móvil manual con comprobante se retiró
+el 15/10/2026: el backend rechaza `payment_method = "sinpe"` (400). La subida de comprobantes
+(`/checkout/upload-receipt/…`) sigue existiendo solo por pedidos viejos, y los campos de número
+SINPE en /admin → Configuración ya no se muestran en la tienda.
 
 ## Flujo
 
@@ -27,8 +29,8 @@ Backend verifica el OrderHash → paid / failed / awaiting / review
 Página de resultado (no requiere sesión). Si se pagó: correo "Pago verificado" al comprador.
 ```
 
-Después del pago, la logística sigue igual que con SINPE: en /admin el pedido pasa a
-Enviado y luego a Entregado (ahí se generan los certificados y se envían a quien recibe).
+Después del pago, la logística sigue en /admin: el pedido pasa a Enviado y luego a
+Entregado (ahí se generan los certificados y se envían a quien recibe).
 
 ## Verificación del retorno (la parte de seguridad)
 

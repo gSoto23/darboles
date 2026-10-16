@@ -53,7 +53,10 @@ class CartCheckoutRequest(BaseModel):
 
 @router.post("/checkout/gift")
 async def create_gift_checkout(data: CartCheckoutRequest, db: Session = Depends(get_db)):
-    if data.payment_method not in ("sinpe", "card"):
+    if data.payment_method == "sinpe":
+        # El SINPE manual con comprobante se retiró: SINPE Móvil se paga ahora por Tilopay
+        raise HTTPException(status_code=400, detail="El pago con SINPE y comprobante ya no está disponible; paga en línea con tarjeta o SINPE Móvil")
+    if data.payment_method != "card":
         raise HTTPException(status_code=400, detail="Método de pago inválido")
     if not data.gifts:
         raise HTTPException(status_code=400, detail="El carrito está vacío")
