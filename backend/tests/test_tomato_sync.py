@@ -370,6 +370,8 @@ def test_scheduler_hour_defaults_to_3_and_ignores_bad_values(monkeypatch):
 def test_scheduler_off_without_config(monkeypatch):
     from app.core import sync_scheduler
     monkeypatch.delenv("TOMATO_SYNC_API_KEY", raising=False)
+    for var in ("TILOPAY_USER", "TILOPAY_PASSWORD", "TILOPAY_KEY"):
+        monkeypatch.delenv(var, raising=False)
     sync_scheduler.start()
     assert sync_scheduler._scheduler is None
 

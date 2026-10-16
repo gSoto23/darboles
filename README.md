@@ -19,7 +19,7 @@ Para producción, ver **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 **Backend**
 - Python 3.11 y FastAPI; SQLAlchemy y Alembic sobre PostgreSQL 15.
 - Sesiones con JWT firmado con `SECRET_KEY` y contraseñas con bcrypt (`passlib`).
-- PDF de certificados con ReportLab; correo por SMTP; pagos con Tilopay (tarjeta) y SINPE Móvil.
+- PDF de certificados con ReportLab; correo por SMTP; pagos en línea con Tilopay (tarjeta o SINPE Móvil, verificados con el `OrderHash`) y SINPE Móvil con comprobante.
 - Todo el backend corre en Docker Compose (`db` y `backend`).
 
 ---
@@ -28,7 +28,7 @@ Para producción, ver **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
 | Área | Qué hace | Código |
 |---|---|---|
-| Tienda (`/regalos`) | Carrito para uno o varios destinatarios, envío según GAM o fuera del GAM, pago con SINPE o tarjeta. El total se recalcula en el servidor con los precios de la base. | `src/app/regalos`, `backend/app/routers/payments.py` |
+| Tienda (`/regalos`) | Carrito para uno o varios destinatarios, envío según GAM o fuera del GAM. Pago con **SINPE Móvil con comprobante** (lo confirma un admin) o **en línea con Tilopay** (tarjeta o SINPE Móvil; se confirma solo si el `OrderHash` es válido; resultado en `/pago/resultado`). El total se recalcula en el servidor con los precios de la base. Ver [doc_tilopay.md](doc_tilopay.md). | `src/app/regalos`, `backend/app/routers/payments.py` |
 | Certificado | PDF "Certificado de regalo" con código de registro y QR hacia `/registro`. | `backend/app/services/pdf_generator.py` |
 | Registro del Guardián (`/registro`) | La persona valida su código, marca en el mapa dónde sembró (con GPS opcional), la fecha y una foto. Solo acepta ubicaciones dentro de Costa Rica. | `src/app/registro`, `backend/app/routers/tracking.py` |
 | Mapa (`/mapa`) | Dos capas agrupadas (leaflet.markercluster, que se abren en abanico; un sector con más de 30 árboles en el mismo punto muestra la lista del sector con enlace a cada ficha): Guardianes (círculo verde) y proyectos de reforestación de TOMATO (borde naranja; relleno verde = verificado vivo, blanco = sin verificar, gris = no sobrevivió; los reemplazados no se dibujan). | `src/app/mapa` |
@@ -61,10 +61,10 @@ darboles/
 │   ├── alembic/versions/         # Migraciones (se aplican solas al arrancar el contenedor)
 │   ├── app/
 │   │   ├── core/                 # database, security (JWT), mailer, uploads (validación de imágenes)
-│   │   ├── models/               # user, tree, gift, tracked_tree, tomato, campaign, config
+│   │   ├── models/               # user, tree, gift, card_payment, tracked_tree, tomato, campaign, config
 │   │   ├── routers/              # auth, admin, admin_tracking, admin_users, leads, payments, tracking, inventory, config
 │   │   ├── schemas/
-│   │   ├── services/             # pdf_generator, tilopay, tomato_crm, tomato_sync
+│   │   ├── services/             # pdf_generator, tilopay, card_payments, tomato_crm, tomato_sync
 │   │   ├── seed.py               # Datos iniciales (especies y usuarios base)
 │   │   └── main.py               # Punto de entrada FastAPI
 │   ├── tests/                    # Pruebas (pytest)
@@ -139,7 +139,6 @@ El lint tiene errores previos conocidos (`no-explicit-any`, `<img>`). Lo importa
 ---
 
 ## 📌 Pendientes conocidos
-- **Tilopay:** el retorno de pago no se verifica contra la API de Tilopay (ver DEPLOYMENT.md §8). Confirma los pagos con tarjeta en el panel de Tilopay antes de despachar.
 - **Especies nativas:** marcar en el admin solo las que confirme el ingeniero forestal.
 - **Términos:** la cláusula de retracto (Ley 7472) debe revisarla un abogado.
 

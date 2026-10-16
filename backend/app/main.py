@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 from app.routers import auth, admin, admin_tracking, leads, payments, tomato, tracking, inventory, admin_users, config
-from app.models import user, tree, gift, config as config_model, campaign, tracked_tree, tomato as tomato_model
+from app.models import user, tree, gift, config as config_model, campaign, tracked_tree, tomato as tomato_model, card_payment
 # from app.core.scheduler import start_scheduler
 from fastapi.staticfiles import StaticFiles
 import os
@@ -34,7 +34,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    # Sincronización de árboles con tomatocr.com; no hace nada si faltan sus variables
+    # Tareas programadas (sincronización con tomatocr.com, cobros de Tilopay abandonados);
+    # cada una se activa solo si sus variables están configuradas
     from app.core import sync_scheduler
     sync_scheduler.start()
 
