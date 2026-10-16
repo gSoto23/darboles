@@ -300,3 +300,18 @@ def test_manual_sinpe_checkout_is_no_longer_accepted(env, client, db_factory):
     assert r.status_code == 400 and "SINPE" in r.json()["detail"]
     db = db_factory()
     assert db.get(TreeSpecies, 1).stock == 10 and db.query(Gift).count() == 0  # no reservó nada
+
+
+def test_public_config_no_longer_exposes_sinpe_details(client, db_factory):
+    data = client.get("/api/v1/config").json()
+    assert "sinpe_number" not in data and "sinpe_name" not in data
+    assert {"gam_shipping_cost", "non_gam_shipping_cost", "gam_cantons"} <= set(data)
+
+
+def test_admin_can_save_config_without_sinpe_fields(client, db_factory):
+    from app.routers.auth import get_current_admin_user
+    app.dependency_overrides[get_current_admin_user] = lambda: object()
+    r = client.put("/api/v1/admin/config", json={"gam_shipping_cost": 3500, "non_gam_shipping_cost": 5500,
+                                                 "gam_delivery_days": "1 a 3 días", "non_gam_delivery_days": "3 a 5 días",
+                                                 "gam_cantons": "Escazú"})
+    assert r.status_code == 200 and r.json()["gam_shipping_cost"] == 3500 and "sinpe_number" not in r.json()

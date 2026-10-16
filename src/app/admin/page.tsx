@@ -622,19 +622,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <h3 style={{ marginBottom: '1.5rem', color: 'var(--color-foreground)', borderTop: '1px solid var(--color-border)', paddingTop: '2rem' }}>Información de Pago (SINPE)</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Número SINPE Móvil</label>
-                  <input type="text" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.sinpe_number} onChange={(e) => setStoreConfig({...storeConfig, sinpe_number: e.target.value})} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-muted)' }}>Nombre Asociado a Cuenta</label>
-                  <input type="text" required style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-foreground)' }} value={storeConfig.sinpe_name} onChange={(e) => setStoreConfig({...storeConfig, sinpe_name: e.target.value})} />
-                </div>
-              </div>
-
-              <button type="submit" style={{ padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer', display: 'block', width: '100%' }}>Guardar Configuración</button>
+              <button type="submit" style={{ marginTop: '2rem', padding: '1rem', borderRadius: '8px', border: 'none', background: 'var(--color-foreground)', color: 'var(--color-background)', fontWeight: 600, cursor: 'pointer', display: 'block', width: '100%' }}>Guardar Configuración</button>
             </form>
           </div>
         )}

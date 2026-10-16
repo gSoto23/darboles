@@ -6,8 +6,9 @@ Tilopay) y vuelve con el resultado. Dárboles nunca ve ni guarda datos de tarjet
 
 Es el **único medio de pago** de la tienda. El SINPE Móvil manual con comprobante se retiró
 el 15/10/2026: el backend rechaza `payment_method = "sinpe"` (400). La subida de comprobantes
-(`/checkout/upload-receipt/…`) sigue existiendo solo por pedidos viejos, y los campos de número
-SINPE en /admin → Configuración ya no se muestran en la tienda.
+(`/checkout/upload-receipt/…`) sigue existiendo solo por pedidos viejos. Los campos de número y
+titular SINPE se quitaron de /admin → Configuración y del endpoint público `/api/v1/config`
+(las columnas quedan en `store_config` sin uso).
 
 ## Flujo
 
