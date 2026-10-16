@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import styles from './Regalos.module.css';
 import { useTranslations } from '@/context/TranslationContext';
-import imageCompression from 'browser-image-compression';
 
 interface TreeSpecies {
   id: number;
@@ -76,9 +75,8 @@ export default function RegalosClient() {
   const [invoiceIdNumber, setInvoiceIdNumber] = useState("");
   const [invoiceAddress, setInvoiceAddress] = useState("");
   const [invoiceActivityCode, setInvoiceActivityCode] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<'sinpe' | 'card'>('sinpe');
-  const [receiptMethod, setReceiptMethod] = useState<'upload' | 'whatsapp'>('upload');
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  // Único medio de pago: en línea con Tilopay (tarjeta o SINPE Móvil). El SINPE manual con comprobante se retiró.
+  const paymentMethod = 'card' as const;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -222,26 +220,6 @@ export default function RegalosClient() {
   const cartShippingTotalCrc = cartItems.reduce((acc, item) => acc + (item.shipping_cost_applied || 0), 0);
   const cartTotalCrc = cartTreeTotalCrc + cartShippingTotalCrc;
 
-  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      setReceiptFile(null);
-      return;
-    }
-    try {
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      };
-      const compressedFile = await imageCompression(file, options);
-      setReceiptFile(compressedFile);
-    } catch (error) {
-      console.error("Error comprimiendo recibo:", error);
-      setReceiptFile(file); // fallback to original
-    }
-  };
-
   const handleConfirmOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
@@ -265,7 +243,6 @@ export default function RegalosClient() {
           invoice_address: invoiceAddress,
           invoice_activity_code: invoiceActivityCode,
           payment_method: paymentMethod,
-          payment_receipt_method: paymentMethod === 'sinpe' ? receiptMethod : null,
           // Informativo únicamente: el backend siempre recalcula el total real
           // a partir de los precios en base de datos antes de cobrar.
           total_amount_crc: cartTotalCrc,
@@ -289,21 +266,10 @@ export default function RegalosClient() {
       }
       const data = await response.json();
 
-      if (paymentMethod === 'card' && data.checkout_url) {
-        window.location.href = data.checkout_url;
-        return;
-      } else {
-        if (paymentMethod === 'sinpe' && receiptMethod === 'upload' && receiptFile && data.transaction_ref) {
-            const formData = new FormData();
-            formData.append('file', receiptFile);
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1"}/payments/checkout/upload-receipt/${data.transaction_ref}`, {
-                method: 'POST',
-                body: formData
-            });
-        }
-        setCheckoutStep('success');
-        setCartItems([]);
+      if (!data.checkout_url) {
+        throw new Error('Respuesta sin URL de pago');
       }
+      window.location.href = data.checkout_url;
     } catch (error) {
       console.error("Payment submission error:", error);
       alert("Hubo un error procesando tu solicitud.");
@@ -591,67 +557,13 @@ export default function RegalosClient() {
 
                       <div className={styles.formSection}>
                         <div className={styles.formSectionTitle}>{t("regalos.checkout.paymentMethod")}</div>
-                        <div className={styles.paymentMethods}>
-                          <div className={`${styles.paymentMethodCard} ${paymentMethod === 'sinpe' ? styles.active : ''}`} onClick={() => setPaymentMethod('sinpe')}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.2rem', color: 'var(--color-foreground)' }}>
-                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                            </div>
-                            <h4 style={{ margin: 0 }}>{t("regalos.checkout.sinpeManual")}</h4>
-                            <small style={{ color: 'var(--color-muted)' }}>{t("regalos.checkout.sinpeManualHint")}</small>
+                        <div className={styles.transferBox}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            <strong>{t("regalos.checkout.online")}</strong>
                           </div>
-                          <div className={`${styles.paymentMethodCard} ${paymentMethod === 'card' ? styles.active : ''}`} onClick={() => setPaymentMethod('card')}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.2rem', color: 'var(--color-foreground)' }}>
-                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                            </div>
-                            <h4 style={{ margin: 0 }}>{t("regalos.checkout.online")}</h4>
-                            <small style={{ color: 'var(--color-muted)' }}>{t("regalos.checkout.onlineHint")}</small>
-                          </div>
+                          <p style={{ margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>{t("regalos.checkout.onlineInfo")}</p>
                         </div>
-
-                        {paymentMethod === 'card' && (
-                          <div className={styles.transferBox}>
-                            <p style={{ margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>{t("regalos.checkout.onlineInfo")}</p>
-                          </div>
-                        )}
-
-                        {paymentMethod === 'sinpe' && storeConfig && (
-                          <div className={styles.transferBox}>
-                            <div className={styles.transferRow}>
-                              <span style={{ color: 'var(--color-muted)', flex: 1 }}>{t("regalos.checkout.totalAmount")}:</span>
-                              <strong style={{ fontSize: '1.25rem', flex: 2, textAlign: 'right' }}>₡{cartTotalCrc.toLocaleString()}</strong>
-                            </div>
-                            <div className={styles.transferRow}>
-                              <span style={{ color: 'var(--color-muted)', flex: 1 }}>A nombre de:</span>
-                              <strong style={{ flex: 2, textAlign: 'right' }}>{storeConfig.sinpe_name}</strong>
-                            </div>
-                            <div className={styles.transferRow}>
-                              <span style={{ color: 'var(--color-muted)', flex: 1 }}>Número SINPE:</span>
-                              <strong style={{ fontSize: '1.25rem', flex: 2, textAlign: 'right' }}>{storeConfig.sinpe_number}</strong>
-                            </div>
-
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                              <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600 }}>Comprobante de Pago</label>
-                              
-                              <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                  <input type="radio" name="receiptMethod" checked={receiptMethod === 'upload'} onChange={() => setReceiptMethod('upload')} />
-                                  Adjuntar imagen del recibo ahora
-                                </label>
-                                
-                                {receiptMethod === 'upload' && (
-                                  <div style={{ paddingLeft: '1.5rem' }}>
-                                    <input type="file" accept="image/*" onChange={handleReceiptUpload} required style={{ fontSize: '0.8rem', padding: '0.5rem', border: '1px dashed var(--color-border)', width: '100%', borderRadius: '4px' }} />
-                                  </div>
-                                )}
-
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                  <input type="radio" name="receiptMethod" checked={receiptMethod === 'whatsapp'} onChange={() => setReceiptMethod('whatsapp')} />
-                                  Lo enviaré al WhatsApp de Dárboles
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
 
                       <div className={styles.summaryBox}>

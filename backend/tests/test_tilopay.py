@@ -293,3 +293,10 @@ def test_hash_is_hmac_sha256_with_documented_key(env):
     message = ("api_Key=llave-de-prueba&api_user=usuario-api&orderId=T1&external_orden_id=CARD-1"
                "&amount=15%2C000.00&currency=CRC&responseCode=1&auth=AB12CD&email=a%40b.co")
     assert got == hmac.new(b"T1|llave-de-prueba|clave-api", message.encode(), hashlib.sha256).hexdigest()
+
+
+def test_manual_sinpe_checkout_is_no_longer_accepted(env, client, db_factory):
+    r = client.post("/api/v1/payments/checkout/gift", json={**ORDER, "payment_method": "sinpe"})
+    assert r.status_code == 400 and "SINPE" in r.json()["detail"]
+    db = db_factory()
+    assert db.get(TreeSpecies, 1).stock == 10 and db.query(Gift).count() == 0  # no reservó nada
